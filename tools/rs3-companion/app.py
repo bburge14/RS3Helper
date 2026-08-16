@@ -14,6 +14,7 @@ focus): F8 autopress, F9 start/pause, F10 reset, F11 cycle style,
 F12 sound. Everything is also reachable from the Practice tab's buttons.
 """
 
+import os
 import sys
 import threading
 import time
@@ -21,6 +22,7 @@ import tkinter as tk
 import webbrowser
 
 import customtkinter as ctk
+from PIL import Image, ImageDraw, ImageFont, ImageTk
 
 try:
     import keyboard
@@ -61,6 +63,75 @@ TAG_COLORS = {
     "threshold": "#6ea3ff",
     "basic": "#5c5968",
 }
+
+ICONS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons")
+
+
+def _initials(name):
+    words = [w for w in name.replace("/", " ").split() if w]
+    letters = "".join(w[0] for w in words[:2]).upper()
+    return letters or "?"
+
+
+def _make_badge(name, kind, size):
+    """Draws a small original placeholder badge (colored circle + the
+    ability's initials) -- not a copy of any game asset."""
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    color = TAG_COLORS.get(kind, TAG_COLORS["threshold"])
+    pad = max(1, size // 16)
+    draw.ellipse([pad, pad, size - pad, size - pad], fill=color)
+    text = _initials(name)
+    try:
+        font = ImageFont.truetype("arialbd.ttf", max(9, size // 2))
+    except Exception:
+        font = ImageFont.load_default()
+    bbox = draw.textbbox((0, 0), text, font=font)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    draw.text(((size - tw) / 2 - bbox[0], (size - th) / 2 - bbox[1]),
+              text, fill=BG, font=font)
+    return img
+
+
+class IconCache:
+    """Loads a user-supplied icons/<ability>.png if present, otherwise
+    falls back to a generated badge. Caches both PIL images (for
+    CTkImage, used in regular widgets) and Tk PhotoImages (for the raw
+    Canvas ticker, which CTkImage can't draw to) per (name, kind, size)."""
+
+    def __init__(self):
+        self._pil = {}
+        self._photo = {}
+
+    def _pil_image(self, name, kind, size):
+        key = (name, kind, size)
+        if key in self._pil:
+            return self._pil[key]
+        custom_path = os.path.join(ICONS_DIR, f"{name}.png")
+        img = None
+        if os.path.exists(custom_path):
+            try:
+                img = Image.open(custom_path).convert("RGBA").resize((size, size))
+            except Exception:
+                img = None
+        if img is None:
+            img = _make_badge(name, kind, size)
+        self._pil[key] = img
+        return img
+
+    def ctk_image(self, name, kind, size):
+        return ctk.CTkImage(light_image=self._pil_image(name, kind, size),
+                             dark_image=self._pil_image(name, kind, size),
+                             size=(size, size))
+
+    def photo_image(self, name, kind, size):
+        key = (name, kind, size)
+        if key not in self._photo:
+            self._photo[key] = ImageTk.PhotoImage(self._pil_image(name, kind, size))
+        return self._photo[key]
+
+
+icons = IconCache()
 
 
 class App(ctk.CTk):
@@ -249,6 +320,9 @@ class App(ctk.CTk):
             ctk.CTkLabel(row, text=str(i), width=24, text_color=MUTED,
                          font=ctk.CTkFont(family="Consolas")).pack(
                 side="left", padx=(10, 6), pady=8)
+            ctk.CTkLabel(row, text="", image=icons.ctk_image(
+                entry["ability"], entry["type"], 28)).pack(
+                side="left", padx=(0, 8), pady=8)
             ctk.CTkLabel(row, text=entry["ability"], width=220, anchor="w",
                          font=ctk.CTkFont(family="Consolas", weight="bold"),
                          text_color=TEXT).pack(side="left", pady=8)
@@ -335,10 +409,14 @@ class App(ctk.CTk):
             text_color=STYLES[self.style_key]["color"])
         self.p_style_label.pack(anchor="w")
 
+        now_row = ctk.CTkFrame(wrap, fg_color="transparent")
+        now_row.pack(anchor="w", pady=(6, 2))
+        self.p_now_icon = ctk.CTkLabel(now_row, text="")
+        self.p_now_icon.pack(side="left", padx=(0, 10))
         self.p_now_label = ctk.CTkLabel(
-            wrap, text="Press Start", font=ctk.CTkFont(size=30, weight="bold"),
+            now_row, text="Press Start", font=ctk.CTkFont(size=30, weight="bold"),
             text_color=TEXT)
-        self.p_now_label.pack(anchor="w", pady=(6, 2))
+        self.p_now_label.pack(side="left")
 
         self.p_next_label = ctk.CTkLabel(
             wrap, text="", font=ctk.CTkFont(size=15), text_color=MUTED)
@@ -696,7 +774,11 @@ class App(ctk.CTk):
     def _render_current(self, name):
         self.current_name = name
         upcoming = self._peek_next()
+        style = STYLES[self.style_key]
+        type_of = {e["ability"]: e["type"] for e in style["bar"]}
+        kind = type_of.get(name, "threshold")
         self.p_now_label.configure(text=name)
+        self.p_now_icon.configure(image=icons.ctk_image(name, kind, 34))
         self.p_next_label.configure(text=f"next: {upcoming}" if upcoming else "")
         if self.overlay and self.overlay.winfo_exists():
             self.overlay_widgets["now"].configure(text=name)
@@ -778,6 +860,10 @@ class App(ctk.CTk):
         c.create_line(TICKER_HIT_X, 6, TICKER_HIT_X, TICKER_HEIGHT - 6,
                        fill=accent, width=2)
 
+        # keep references so Tk doesn't garbage-collect the PhotoImages
+        # before the canvas actually paints this frame
+        self._ticker_photo_refs = []
+
         # current ability flashes at the hit line for a couple ticks after cue
         since_cue = self.tick - self._last_cue_tick
         if since_cue <= 1:
@@ -789,7 +875,10 @@ class App(ctk.CTk):
             c.create_oval(TICKER_HIT_X - 22, TICKER_HEIGHT / 2 - 22,
                           TICKER_HIT_X + 22, TICKER_HEIGHT / 2 + 22,
                           outline=flash, width=3)
-            c.create_text(TICKER_HIT_X, TICKER_HEIGHT - 12,
+            photo = icons.photo_image(self.current_name, kind, 34)
+            self._ticker_photo_refs.append(photo)
+            c.create_image(TICKER_HIT_X, TICKER_HEIGHT / 2 - 4, image=photo)
+            c.create_text(TICKER_HIT_X, TICKER_HEIGHT - 10,
                           text=self.current_name, fill=TEXT if pulse else MUTED,
                           font=("Segoe UI", 9, "bold"))
 
@@ -799,17 +888,23 @@ class App(ctk.CTk):
 
         for name, kind, due in self._simulate_upcoming(TICKER_LOOKAHEAD):
             x = TICKER_HIT_X + (due - effective_tick) * TICKER_PX_PER_TICK
-            if x - 55 > TICKER_WIDTH:
+            if x - 65 > TICKER_WIDTH:
                 break
             if x < TICKER_HIT_X - 30:
                 continue
             color = TAG_COLORS[kind]
-            w = 100
+            w = 128
+            icon_size = 22
             c.create_rectangle(x - w / 2, TICKER_HEIGHT / 2 - 16,
                                x + w / 2, TICKER_HEIGHT / 2 + 16,
                                outline=color, width=2, fill=BG)
-            c.create_text(x, TICKER_HEIGHT / 2, text=name, fill=TEXT,
-                          font=("Segoe UI", 9, "bold"), width=w - 10)
+            photo = icons.photo_image(name, kind, icon_size)
+            self._ticker_photo_refs.append(photo)
+            icon_x = x - w / 2 + 8 + icon_size / 2
+            c.create_image(icon_x, TICKER_HEIGHT / 2, image=photo)
+            c.create_text(icon_x + icon_size / 2 + 6, TICKER_HEIGHT / 2, text=name,
+                          fill=TEXT, font=("Segoe UI", 9, "bold"),
+                          width=w - icon_size - 22, anchor="w")
 
     # ---------------------------------------------------------------
 

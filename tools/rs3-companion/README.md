@@ -109,6 +109,17 @@ Manual: Settings tab → Updates → **Check for updates** any time, then
 triggered on demand. **Open releases page** is always there too, for a
 plain manual download.
 
+## Ability icons
+
+Real RS3 ability icons are Jagex's copyrighted game art, so none are
+bundled with this repo. By default every ability shows a generated
+placeholder badge instead (a colored circle with its initials,
+color-coded the same as the type tags). If you want the real icons,
+drop your own PNGs (screenshotted from your own client) into
+`icons/`, named to match the ability exactly — see `icons/README.md`.
+That folder is gitignored, so your icons stay local and never get
+pushed or bundled into a release zip.
+
 ## Data & accuracy
 
 Ability names/priorities in `data.py` reflect the live-game kit at time

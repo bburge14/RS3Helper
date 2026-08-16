@@ -4,3 +4,5 @@ __pycache__/
 # rs3-companion: local, machine-specific -- not shared via git
 tools/rs3-companion/.venv/
 tools/rs3-companion/run.ps1
+tools/rs3-companion/icons/*
+!tools/rs3-companion/icons/README.md
