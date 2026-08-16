@@ -1,11 +1,15 @@
 <#
 .SYNOPSIS
-    Installer for the RS3 Rotation Prompter.
+    Installer for RS3 Companion.
 
 .DESCRIPTION
     Finds a Python interpreter, creates an isolated virtual environment
     in this folder, installs requirements.txt into it, and drops a
-    desktop shortcut that launches the overlay without a console window.
+    desktop shortcut that launches the app without a console window.
+
+    Updates are handled inside the app itself (Settings tab -> Updates),
+    not by a separate script -- run this installer once, then use the
+    app's "Check for updates" / "Update now" buttons going forward.
 
 .USAGE
     From this folder, in PowerShell:
@@ -18,7 +22,7 @@
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 
-Write-Host "== RS3 Rotation Prompter installer ==" -ForegroundColor Cyan
+Write-Host "== RS3 Companion installer ==" -ForegroundColor Cyan
 
 # 1. Find a Python interpreter
 $candidates = @(
@@ -55,50 +59,35 @@ if (-not (Test-Path $venvPython)) {
 }
 
 # 3. Install dependencies
-Write-Host "Installing dependencies..."
+Write-Host "Installing dependencies (this pulls in a GUI toolkit, may take a minute)..."
 & $venvPython -m pip install --upgrade pip --quiet
 & $venvPython -m pip install -r (Join-Path $root "requirements.txt")
 
-# 4. Seed a personal key-bindings file (gitignored, survives updates)
-$keysPath = Join-Path $root "keys.json"
-$keysExamplePath = Join-Path $root "keys.example.json"
-if (-not (Test-Path $keysPath)) {
-    Copy-Item $keysExamplePath $keysPath
-    Write-Host "Created keys.json from the example -- edit it to match your action bar."
-} else {
-    Write-Host "keys.json already exists, leaving it alone."
-}
-
-# 6. Write a console launcher (handy for seeing errors)
+# 4. Write a console launcher (handy for seeing errors)
 $runScript = Join-Path $root "run.ps1"
 @"
-# Launches the prompter with a visible console -- useful for debugging.
+# Launches RS3 Companion with a visible console -- useful for debugging.
 & "$venvPython" "$root\app.py"
 "@ | Set-Content -Path $runScript -Encoding UTF8
 Write-Host "Wrote run.ps1 (console launcher, shows errors)."
 
-# 7. Desktop shortcut -> silent launch via pythonw (no console window)
+# 5. Desktop shortcut -> silent launch via pythonw (no console window)
 $desktop = [Environment]::GetFolderPath("Desktop")
-$shortcutPath = Join-Path $desktop "RS3 Rotation Prompter.lnk"
+$shortcutPath = Join-Path $desktop "RS3 Companion.lnk"
 $wsh = New-Object -ComObject WScript.Shell
 $shortcut = $wsh.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = $venvPythonw
 $shortcut.Arguments = "`"$root\app.py`""
 $shortcut.WorkingDirectory = $root
 $shortcut.IconLocation = $venvPythonw
-$shortcut.Description = "RS3 Rotation Prompter (prompt-only by default; F8 arms autopress)"
+$shortcut.Description = "RS3 Companion -- bar builder, practice/autopress, settings"
 $shortcut.Save()
 Write-Host "Created desktop shortcut: $shortcutPath"
 
 Write-Host ""
 Write-Host "Done." -ForegroundColor Green
 Write-Host "Launch it from the desktop shortcut, or 'powershell -File run.ps1' for a debug console."
-Write-Host "Hotkeys: F8 autopress  F9 start/pause  F10 reset  F11 style  F12 sound"
+Write-Host "Set your key bindings in the app's Settings tab before arming autopress (F8)."
 Write-Host "If hotkeys don't register while the game has focus, re-run the shortcut as Administrator"
 Write-Host "(right-click the shortcut -> Run as administrator) -- this is a common Windows restriction"
 Write-Host "when the game window is itself elevated."
-Write-Host ""
-Write-Host "Before using autopress (F8): open keys.json and check the bindings for each" -ForegroundColor Yellow
-Write-Host "style match your actual in-game action bar. It ships with placeholder slots." -ForegroundColor Yellow
-Write-Host ""
-Write-Host "To pick up future updates later: powershell -ExecutionPolicy Bypass -File update.ps1"

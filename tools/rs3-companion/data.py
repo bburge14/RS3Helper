@@ -1,0 +1,383 @@
+"""
+Static reference data: the four combat styles and a starter set of bosses.
+
+Accuracy note: ability names/priorities reflect the live-game kit at time
+of writing and shift with Jagex balance passes -- cross-check against
+in-game tooltips before a serious kill. Boss `mechanics` entries are
+deliberately high-level starter notes, not a full mechanic-by-mechanic
+guide -- ask for a specific boss to be fleshed out further and that
+entry gets refined.
+"""
+
+STYLE_ORDER = ["necromancy", "magic", "ranged", "melee"]
+
+STYLES = {
+    "necromancy": {
+        "label": "Necromancy",
+        "color": "#a780f2",
+        "weapon": "2H — Death Guard / Skull Sceptre",
+        "resource": "Souls (built by basics, spent by Living Death)",
+        "bar": [
+            {"ability": "Living Death", "type": "ultimate",
+             "revopp": "Fires the instant a soul stack is banked at 100%",
+             "basics": "Manual — hold for a soul-stacked window"},
+            {"ability": "Death Skulls", "type": "threshold",
+             "revopp": "AoE burst the moment 50% is hit on packs",
+             "basics": "Manual — save for 2+ targets"},
+            {"ability": "Bloodsplicer", "type": "threshold",
+             "revopp": "Single-target dump between Living Death windows",
+             "basics": "Manual — single-target default at 50%"},
+            {"ability": "Touch of Death", "type": "basic",
+             "revopp": "Highest single-target adrenaline-per-cast basic",
+             "basics": "On bar — primary filler"},
+            {"ability": "Finger of Death", "type": "basic",
+             "revopp": "Channelled multi-hit, fires when target holds still",
+             "basics": "On bar"},
+            {"ability": "Volley of Souls", "type": "basic",
+             "revopp": "AoE basic, marks targets to feed soul generation",
+             "basics": "On bar — keep early for mark uptime"},
+            {"ability": "Bloat", "type": "basic",
+             "revopp": "Applies stacking DoT, cheap adrenaline filler",
+             "basics": "On bar"},
+            {"ability": "Command Vengeful Ghost", "type": "threshold",
+             "revopp": "Persistent summon DPS, recast on cooldown",
+             "basics": "Manual — recast whenever it drops"},
+            {"ability": "Split Soul", "type": "threshold",
+             "revopp": "Held out of Revo — self-heal under HP pressure",
+             "basics": "Manual — reactive heal, never automatic"},
+        ],
+        "opener": [
+            ("Volley of Souls", 0), ("Bloat", 3),
+            ("Command Vengeful Ghost", 3), ("Invoke Death", 6),
+            ("Living Death", 2),
+        ],
+        "loop": ["Death Skulls", "Bloodsplicer"],
+        "loop_interval_ticks": 8,
+        "keys_default": {
+            "Volley of Souls": "3", "Bloat": "4",
+            "Command Vengeful Ghost": "5", "Invoke Death": "6",
+            "Living Death": "1", "Death Skulls": "2", "Bloodsplicer": "7",
+        },
+        "defensive": [
+            {"mechanic": "Bind / stun applied to you",
+             "counter": "Freedom on cast — no innate cleanse"},
+            {"mechanic": "Incoming burst / special",
+             "counter": "Debilitate pre-emptively, or Anticipation on a flagged special"},
+            {"mechanic": "Sustained HP pressure",
+             "counter": "Split Soul on cooldown — don't let it sit unused"},
+            {"mechanic": "Multi-target pull",
+             "counter": "Volley of Souls + Death Skulls outrank Bloodsplicer"},
+        ],
+        "gear": {
+            "aura": "Reaper's / Berserker",
+            "pocket": "Necromancy-scaling familiar or flat damage pocket",
+            "relics": "Extended soul-stack duration or reduced Living Death cooldown",
+        },
+    },
+    "magic": {
+        "label": "Magic",
+        "color": "#6ea3ff",
+        "weapon": "Dual Wield or 2H — Chaotic / Staff of Armadyl",
+        "resource": "Combust DoT window (gates Asphyxiate)",
+        "bar": [
+            {"ability": "Sunshine", "type": "ultimate",
+             "revopp": "Channelled buff+damage, fired at 100%",
+             "basics": "Manual — time to a burn-phase start"},
+            {"ability": "Concentrated Blast", "type": "threshold",
+             "revopp": "Highest single-hit threshold at 50%",
+             "basics": "Manual — default 50% dump"},
+            {"ability": "Asphyxiate", "type": "threshold",
+             "revopp": "Execute, only while Combust is ticking",
+             "basics": "Manual — fire the instant Combust lands"},
+            {"ability": "Combust", "type": "basic",
+             "revopp": "Applies the DoT gating Asphyxiate",
+             "basics": "On bar — keep first"},
+            {"ability": "Wrack", "type": "basic",
+             "revopp": "Core single-target adrenaline filler",
+             "basics": "On bar"},
+            {"ability": "Impact", "type": "basic",
+             "revopp": "AoE basic with a stun component",
+             "basics": "On bar"},
+            {"ability": "Dragon Breath", "type": "threshold",
+             "revopp": "AoE threshold, 2+ targets only",
+             "basics": "Manual — multi-target only"},
+            {"ability": "Wild Magic", "type": "threshold",
+             "revopp": "Style-converting filler, lowest priority",
+             "basics": "Manual"},
+        ],
+        "opener": [
+            ("Combust", 0), ("Wild Magic", 5),
+            ("Asphyxiate", 2), ("Sunshine", 6),
+        ],
+        "loop": ["Concentrated Blast", "Asphyxiate"],
+        "loop_interval_ticks": 8,
+        "keys_default": {
+            "Combust": "4", "Wild Magic": "5", "Asphyxiate": "3",
+            "Sunshine": "1", "Concentrated Blast": "2",
+        },
+        "defensive": [
+            {"mechanic": "Bind / stun applied to you",
+             "counter": "Freedom on cast — no innate cleanse"},
+            {"mechanic": "Incoming burst / special",
+             "counter": "Resonance banked, or Devotion to redirect onto a familiar"},
+            {"mechanic": "Target is bind/stun immune",
+             "counter": "Drop Impact's stun-chasing usage, prioritize Wrack/Combust"},
+            {"mechanic": "Multi-target pull",
+             "counter": "Dragon Breath outranks Concentrated Blast until it thins"},
+        ],
+        "gear": {
+            "aura": "Maniacal / Berserker",
+            "pocket": "Magic-scaling familiar or flat damage pocket",
+            "relics": "Reduced Sunshine cooldown or extended Combust duration",
+        },
+    },
+    "ranged": {
+        "label": "Ranged",
+        "color": "#57c98a",
+        "weapon": "2H Bow or Dual Wield Crossbows",
+        "resource": "Rapid Fire → Snipe chain (no single nuke ultimate)",
+        "bar": [
+            {"ability": "Rapid Fire", "type": "basic",
+             "revopp": "Channelled, fires when target holds still — highest sustained output",
+             "basics": "Manual — only when you can hold position"},
+            {"ability": "Snipe", "type": "threshold",
+             "revopp": "Unreflectable single-target burst at 50%",
+             "basics": "Manual"},
+            {"ability": "Ricochet", "type": "threshold",
+             "revopp": "AoE threshold, 2+ targets only",
+             "basics": "Manual — multi-target only"},
+            {"ability": "Piercing Shot", "type": "basic",
+             "revopp": "Core single-target filler",
+             "basics": "On bar"},
+            {"ability": "Snap Shot", "type": "basic",
+             "revopp": "Fast-hitting basic, sustains adrenaline",
+             "basics": "On bar"},
+            {"ability": "Fragmentation Shot", "type": "threshold",
+             "revopp": "Secondary AoE threshold behind Ricochet",
+             "basics": "Manual — multi-target only"},
+            {"ability": "Needle Strike", "type": "threshold",
+             "revopp": "Stun-threshold, held for mechanics needing a hard interrupt",
+             "basics": "Manual — mechanic-reactive"},
+            {"ability": "Binding Shot", "type": "basic",
+             "revopp": "Kept out of Revo — only to lock a target that must not move",
+             "basics": "Manual"},
+        ],
+        "opener": [("Piercing Shot", 0), ("Rapid Fire", 5)],
+        "loop": ["Snipe", "Ricochet"],
+        "loop_interval_ticks": 8,
+        "keys_default": {
+            "Piercing Shot": "4", "Rapid Fire": "1", "Snipe": "2", "Ricochet": "3",
+        },
+        "defensive": [
+            {"mechanic": "Bind / stun applied to you",
+             "counter": "Freedom on cast — no innate cleanse"},
+            {"mechanic": "Incoming burst / special",
+             "counter": "Debilitate pre-emptively, Anticipation on a flagged special"},
+            {"mechanic": "Target must not reposition",
+             "counter": "Binding Shot, cast manually, never left to Revo"},
+            {"mechanic": "Multi-target pull",
+             "counter": "Ricochet + Fragmentation Shot outrank Snipe"},
+        ],
+        "gear": {
+            "aura": "Precise / Berserker",
+            "pocket": "Ranged-scaling familiar or flat damage pocket",
+            "relics": "Increased Rapid Fire uptime or reduced Snipe cooldown",
+        },
+    },
+    "melee": {
+        "label": "Melee",
+        "color": "#ff7a70",
+        "weapon": "Dual Wield or 2H",
+        "resource": "Fury — 50% adrenaline opener, front-loaded every kill",
+        "bar": [
+            {"ability": "Meteor Strike / Death's Swiftness", "type": "ultimate",
+             "revopp": "2H or DW ultimate, dumped at 100%",
+             "basics": "Manual — time to a guaranteed-hit window"},
+            {"ability": "Fury", "type": "threshold",
+             "revopp": "50%-cost opener — best damage-per-adrenaline in the kit",
+             "basics": "Manual — always the opener"},
+            {"ability": "Assault", "type": "threshold",
+             "revopp": "Secondary single-target threshold dump",
+             "basics": "Manual"},
+            {"ability": "Slice", "type": "basic",
+             "revopp": "Core single-target filler",
+             "basics": "On bar"},
+            {"ability": "Punish", "type": "basic",
+             "revopp": "High adrenaline-per-cast basic",
+             "basics": "On bar"},
+            {"ability": "Havoc", "type": "basic",
+             "revopp": "Sustains adrenaline between thresholds",
+             "basics": "On bar"},
+            {"ability": "Sever", "type": "basic",
+             "revopp": "Bleed-applying basic, cheap filler",
+             "basics": "On bar"},
+            {"ability": "Cleave / Quake", "type": "threshold",
+             "revopp": "AoE threshold, 2+ targets only",
+             "basics": "Manual — multi-target only"},
+        ],
+        "opener": [
+            ("Fury", 0), ("Assault", 4),
+            ("Meteor Strike / Death's Swiftness", 6),
+        ],
+        "loop": ["Fury", "Assault"],
+        "loop_interval_ticks": 8,
+        "keys_default": {
+            "Fury": "2", "Assault": "3",
+            "Meteor Strike / Death's Swiftness": "1",
+        },
+        "defensive": [
+            {"mechanic": "Bind / stun applied to you",
+             "counter": "Freedom on cast — no innate cleanse"},
+            {"mechanic": "Incoming burst / special",
+             "counter": "Barricade or Reflect pre-emptively, Anticipation on a flagged special"},
+            {"mechanic": "Sustained melee pressure back",
+             "counter": "Provoke to force aggro; Berserk only with healing banked"},
+            {"mechanic": "Multi-target pull",
+             "counter": "Cleave/Quake outrank Fury and Assault"},
+        ],
+        "gear": {
+            "aura": "Berserker (Reflexes if survivability is tight)",
+            "pocket": "Melee-scaling familiar or flat damage pocket",
+            "relics": "Reduced Fury cooldown or extended Berserk uptime",
+        },
+    },
+}
+
+# Boss order controls the dropdown; "general" is always first and maps
+# to no boss-specific overlay (just the plain style bar above).
+BOSS_ORDER = [
+    "general", "telos", "arch_glacor", "solak", "nex_aod",
+    "rasial", "vorago", "zamorak",
+]
+
+BOSSES = {
+    "general": {
+        "label": "General (no boss selected)",
+        "category": "—",
+        "summary": "Plain style bar, not tuned to a specific fight.",
+        "mechanics": [],
+        "bar_notes": [],
+    },
+    "telos": {
+        "label": "Telos, the Warden",
+        "category": "Solo",
+        "summary": "Enrage-scaling solo fight — damage output and boss "
+                    "HP both climb with each successful kill's banked enrage.",
+        "mechanics": [
+            {"name": "Enrage scaling",
+             "counter": "Bank enrage deliberately; higher enrage raises both risk and reward, so match it to your gear/skill rather than chasing it blindly"},
+            {"name": "Reflect phase",
+             "counter": "Throttle burst-damage abilities during reflect windows — overkilling yourself is the #1 death cause here"},
+            {"name": "Sustained DoT pressure (Creeping Death / similar)",
+             "counter": "Keep healing abilities and food banked rather than spent early"},
+            {"name": "Stun mechanic",
+             "counter": "Freedom timed to the cast, not reactive after the stun lands"},
+        ],
+        "bar_notes": [
+            "Favor abilities you can cancel or delay over long channelled ones — reflect/stun windows punish commitment",
+            "Keep a heal/shield threshold in reserve rather than on cooldown-rotation autopilot",
+        ],
+    },
+    "arch_glacor": {
+        "label": "Arch-Glacor",
+        "category": "Solo",
+        "summary": "Ice-themed solo encounter with an \"Awakened\" hard mode; "
+                    "starter notes only — tell me to go deeper on this one for precise phase timings.",
+        "mechanics": [
+            {"name": "Frost/fear stacking",
+             "counter": "Manage stacks proactively rather than letting them cap — a capped debuff typically forces a defensive"},
+            {"name": "Phase transitions",
+             "counter": "Hold a defensive ultimate/threshold through transitions instead of dumping it mid-phase"},
+        ],
+        "bar_notes": [
+            "Keep a defensive ability free heading into each phase transition",
+        ],
+    },
+    "solak": {
+        "label": "Solak",
+        "category": "Group",
+        "summary": "Team environmental fight built around tendrils, group "
+                    "healing orbs, and a world-boss-scale HP pool.",
+        "mechanics": [
+            {"name": "Tendril adds",
+             "counter": "Peel onto adds promptly — letting them sit builds group-wide damage pressure"},
+            {"name": "Group healing orbs",
+             "counter": "Route through orbs on cooldown even mid-rotation; team sustain outranks a few seconds of personal DPS"},
+            {"name": "Enrage-style escalation over the fight's duration",
+             "counter": "Pace burst-cooldown usage — later phases hit harder, don't dump everything in phase one"},
+        ],
+        "bar_notes": [
+            "Trade a little single-target priority for AoE/threshold abilities that also clear tendrils",
+        ],
+    },
+    "nex_aod": {
+        "label": "Nex: Angel of Death",
+        "category": "Solo",
+        "summary": "Four-form solo boss (Fumus, Umbra, Cruor, Glacies) that "
+                    "cycles forms, each demanding a different defensive response.",
+        "mechanics": [
+            {"name": "Fumus (poison form)",
+             "counter": "Anti-poison / cure poison ready; avoid clumping if teamed"},
+            {"name": "Umbra (shadow form)",
+             "counter": "Watch for damage-reduction or blind-style effects — keep a cleanse ready"},
+            {"name": "Cruor (blood form)",
+             "counter": "Life-drain pressure — keep healing thresholds available, don't dump them early"},
+            {"name": "Glacies (ice form)",
+             "counter": "Bind/freeze-heavy — Freedom timed to casts, not reactive"},
+        ],
+        "bar_notes": [
+            "Keep one flexible defensive (Freedom or a cleanse-equivalent) unused going into each form transition",
+        ],
+    },
+    "rasial": {
+        "label": "Rasial, the Lightbringer",
+        "category": "Group",
+        "summary": "Soul-mechanic team fight with prayer/curse interaction "
+                    "and periodic add waves.",
+        "mechanics": [
+            {"name": "Soul stacking",
+             "counter": "Manage stacks per the fight's callouts — letting them cap triggers a punishing effect"},
+            {"name": "Add waves",
+             "counter": "Switch to adds promptly on spawn — letting them live compounds group damage"},
+            {"name": "Prayer/curse swap requirement",
+             "counter": "Keep the required protection active rather than reactive-swapping after a hit"},
+        ],
+        "bar_notes": [
+            "Prioritize abilities with cleave/multi-target value during add waves over pure single-target thresholds",
+        ],
+    },
+    "vorago": {
+        "label": "Vorago",
+        "category": "Group",
+        "summary": "Mechanic-dense team fight built around an escalating "
+                    "\"invocation\"/difficulty toggle and a bomb-carry mechanic.",
+        "mechanics": [
+            {"name": "Bomb carry",
+             "counter": "Whoever's marked moves away from the group immediately — don't let it detonate near allies"},
+            {"name": "Escalating difficulty modifiers",
+             "counter": "Match modifiers to your team's gear/experience; they compound, don't stack blind"},
+            {"name": "Enrage / berserk-style phase",
+             "counter": "Hold burst cooldowns for the phase where damage actually matters most, not the opener"},
+        ],
+        "bar_notes": [
+            "Keep mobility (Surge/Bladed Dive/Escape-equivalent) available at all times for the bomb mechanic",
+        ],
+    },
+    "zamorak": {
+        "label": "Zamorak, Lord of Chaos",
+        "category": "Group",
+        "summary": "Late-game team fight with memory/vision phases and a "
+                    "reflect-style punish window.",
+        "mechanics": [
+            {"name": "Memory/vision phases",
+             "counter": "Follow the phase-specific positioning callout — standing in the wrong spot is the main death cause"},
+            {"name": "Reflect window",
+             "counter": "Throttle burst abilities the same way as any reflect mechanic — don't overkill yourself"},
+            {"name": "Add/phase transitions",
+             "counter": "Bank a defensive threshold/ultimate through each transition rather than spending it early"},
+        ],
+        "bar_notes": [
+            "Keep one high-value defensive in reserve through every phase transition",
+        ],
+    },
+}
