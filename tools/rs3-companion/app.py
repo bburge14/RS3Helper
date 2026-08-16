@@ -56,6 +56,11 @@ TAG_COLORS = {
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
+        # CustomTkinter has a known Windows quirk where the window can
+        # render without an OS title bar (no visible close button) until
+        # it's hidden and re-shown once. Withdraw now, deiconify once
+        # everything below is built, so there's always a way to close it.
+        self.withdraw()
         self.title("RS3 Companion")
         self.geometry("860x620")
         self.configure(fg_color=BG)
@@ -83,6 +88,7 @@ class App(ctk.CTk):
         self._reset_practice()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.after(TICK_MS, self._tick_loop)
+        self.after(150, self.deiconify)
 
     # ---------------------------------------------------------------
     # Layout
@@ -314,31 +320,68 @@ class App(ctk.CTk):
                      justify="left", font=ctk.CTkFont(size=11)).pack(
             anchor="w", pady=(4, 0))
 
-    def _toggle_overlay(self):
+    def _close_overlay(self):
         if self.overlay and self.overlay.winfo_exists():
             self.overlay.destroy()
-            self.overlay = None
+        self.overlay = None
+
+    def _toggle_overlay(self):
+        if self.overlay and self.overlay.winfo_exists():
+            self._close_overlay()
             return
         self.overlay = ctk.CTkToplevel(self)
+        # CustomTkinter has a known Windows quirk where a freshly-created
+        # Toplevel can render with no OS title bar (and so no visible
+        # close button) until it's hidden and re-shown once. Do that
+        # before anything else so there's always a way to close this
+        # window even if that glitch happens.
+        self.overlay.withdraw()
         self.overlay.title("RS3 Companion — Practice")
-        self.overlay.geometry("340x150+60+60")
+        self.overlay.geometry("340x160+60+60")
         self.overlay.attributes("-topmost", True)
         self.overlay.configure(fg_color=BG)
+        self.overlay.protocol("WM_DELETE_WINDOW", self._close_overlay)
+        self.overlay.bind("<Escape>", lambda e: self._close_overlay())
 
         accent = ctk.CTkFrame(self.overlay, height=4,
                                fg_color=STYLES[self.style_key]["color"])
         accent.pack(fill="x")
+
+        header = ctk.CTkFrame(self.overlay, fg_color="transparent")
+        header.pack(fill="x", padx=14, pady=(8, 0))
+        ctk.CTkLabel(header, text="Practice overlay", text_color=MUTED,
+                     font=ctk.CTkFont(size=11)).pack(side="left")
+        ctk.CTkButton(header, text="×", width=24, height=24, fg_color="transparent",
+                      hover_color="#3a1f1e", text_color=MUTED,
+                      command=self._close_overlay).pack(side="right")
+
         now = ctk.CTkLabel(self.overlay, text=self.current_name or "—",
                             font=ctk.CTkFont(size=20, weight="bold"),
                             text_color=TEXT)
-        now.pack(anchor="w", padx=14, pady=(10, 2))
+        now.pack(anchor="w", padx=14, pady=(6, 2))
         nxt = ctk.CTkLabel(self.overlay, text="", text_color=MUTED)
         nxt.pack(anchor="w", padx=14)
         tickl = ctk.CTkLabel(self.overlay, text=f"tick {self.tick}",
                               text_color=MUTED, font=ctk.CTkFont(family="Consolas", size=10))
         tickl.pack(anchor="w", padx=14, pady=(10, 0))
         self.overlay_widgets = {"now": now, "next": nxt, "tick": tickl, "accent": accent}
-        self.overlay.protocol("WM_DELETE_WINDOW", self._toggle_overlay)
+
+        # Drag-to-move by the header, since the OS title bar can't
+        # always be relied on to render (see the withdraw() note above).
+        for widget in (header, self.overlay):
+            widget.bind("<ButtonPress-1>", self._overlay_drag_start)
+            widget.bind("<B1-Motion>", self._overlay_drag_move)
+
+        self.overlay.after(150, self.overlay.deiconify)
+
+    def _overlay_drag_start(self, event):
+        self._overlay_drag_x = event.x_root - self.overlay.winfo_x()
+        self._overlay_drag_y = event.y_root - self.overlay.winfo_y()
+
+    def _overlay_drag_move(self, event):
+        x = event.x_root - self._overlay_drag_x
+        y = event.y_root - self._overlay_drag_y
+        self.overlay.geometry(f"+{x}+{y}")
 
     # ---------- Settings tab ----------
 

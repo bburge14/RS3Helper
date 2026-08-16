@@ -35,6 +35,15 @@ hooking/sending keys over an elevated window, and games sometimes
 launch elevated. Right-click the desktop shortcut → Run as
 administrator.
 
+## Closing the app
+
+CustomTkinter windows occasionally render with no OS title bar on
+Windows (a known upstream quirk). The app works around it on launch, but
+if you ever end up with a window you can't find a title bar or × on:
+Alt+F4 with it focused, or Ctrl+Shift+Esc → Task Manager → end
+`python.exe`/`pythonw.exe`. The pop-out overlay also has its own ×
+button and closes on Escape regardless of title bar state.
+
 ## The three tabs
 
 **Bar Builder** — pick Style / Boss / Mode at the top. Shows the full
