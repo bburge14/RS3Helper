@@ -143,7 +143,7 @@ class App(ctk.CTk):
         # everything below is built, so there's always a way to close it.
         self.withdraw()
         self.title("RS3 Companion")
-        self.geometry("860x620")
+        self.geometry("930x680")
         self.configure(fg_color=BG)
 
         self.config_store = AppConfig()
@@ -163,12 +163,14 @@ class App(ctk.CTk):
         self.current_name = ""
         self.overlay = None
         self.overlay_widgets = {}
+        self.bar_popout = None
+        self.settings_popout = None
         self._last_cue_tick = -999
         self._tick_anchor_time = time.monotonic()
         self._pending_payload = None
 
         self._build_update_banner()
-        self._build_tabs()
+        self._build_main()
         self._bind_hotkeys()
         self._reset_practice()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -197,26 +199,53 @@ class App(ctk.CTk):
                       command=self.update_banner.pack_forget).pack(
             side="right", padx=6, pady=7)
 
-    def _build_tabs(self):
-        self.tabs = ctk.CTkTabview(self, fg_color=SURFACE)
-        self.tabs.pack(fill="both", expand=True, padx=12, pady=12)
-        self.tabs.add("Bar Builder")
-        self.tabs.add("Practice")
-        self.tabs.add("Settings")
+    def _build_main(self):
+        self.main_content = ctk.CTkFrame(self, fg_color=SURFACE)
+        self.main_content.pack(fill="both", expand=True, padx=12, pady=12)
 
-        self._build_bar_builder(self.tabs.tab("Bar Builder"))
-        self._build_practice(self.tabs.tab("Practice"))
-        self._build_settings(self.tabs.tab("Settings"))
+        self._build_top_bar(self.main_content)
+        self._build_practice(self.main_content)
+
+    def _build_top_bar(self, parent):
+        top = ctk.CTkFrame(parent, fg_color="transparent")
+        top.pack(fill="x", padx=8, pady=(8, 4))
+
+        ctk.CTkLabel(top, text="Style").grid(row=0, column=0, padx=(0, 6), sticky="w")
+        self.style_menu = ctk.CTkOptionMenu(
+            top, values=[STYLES[k]["label"] for k in STYLE_ORDER],
+            command=self._on_style_change, width=150)
+        self.style_menu.set(STYLES[self.style_key]["label"])
+        self.style_menu.grid(row=0, column=1, padx=(0, 14))
+
+        ctk.CTkLabel(top, text="Boss").grid(row=0, column=2, padx=(0, 6), sticky="w")
+        self.boss_menu = ctk.CTkOptionMenu(
+            top, values=[BOSSES[k]["label"] for k in BOSS_ORDER],
+            command=self._on_boss_change, width=200)
+        self.boss_menu.set(BOSSES[self.boss_key]["label"])
+        self.boss_menu.grid(row=0, column=3, padx=(0, 14))
+
+        ctk.CTkLabel(top, text="Mode").grid(row=0, column=4, padx=(0, 6), sticky="w")
+        self.mode_menu = ctk.CTkOptionMenu(
+            top, values=["Revo Basics + Manual", "Revo++ (Full Auto)"],
+            command=self._on_mode_change, width=170)
+        self.mode_menu.set("Revo Basics + Manual" if self.mode == "revo_basics"
+                            else "Revo++ (Full Auto)")
+        self.mode_menu.grid(row=0, column=5, padx=(0, 20))
+
+        ctk.CTkButton(top, text="Bar Builder", width=110,
+                      command=self._toggle_bar_builder).grid(row=0, column=6, padx=(0, 8))
+        ctk.CTkButton(top, text="Settings", width=90, fg_color="#443f56",
+                      command=self._toggle_settings).grid(row=0, column=7)
 
     def _show_update_banner(self, tag):
         self.update_banner_label.configure(
             text=f"Update {tag} downloaded — restart to apply")
-        self.update_banner.pack(fill="x", side="top", before=self.tabs)
-        if hasattr(self, "version_label"):
+        self.update_banner.pack(fill="x", side="top", before=self.main_content)
+        if hasattr(self, "version_label") and self.version_label.winfo_exists():
             self.version_label.configure(
                 text=f"Installed version: {updater.local_version()} "
                      f"(update downloaded, restart to apply)")
-        if hasattr(self, "update_now_btn"):
+        if hasattr(self, "update_now_btn") and self.update_now_btn.winfo_exists():
             self.update_now_btn.configure(state="disabled")
 
     def _restart_now(self):
@@ -244,40 +273,37 @@ class App(ctk.CTk):
         # Settings tab's manual "Check for updates" surfaces those on
         # request instead of nagging on every launch.
 
-    # ---------- Bar Builder tab ----------
+    # ---------- Bar Builder popout ----------
 
-    def _build_bar_builder(self, parent):
-        top = ctk.CTkFrame(parent, fg_color="transparent")
-        top.pack(fill="x", padx=8, pady=(8, 4))
+    def _close_bar_builder(self):
+        if self.bar_popout and self.bar_popout.winfo_exists():
+            self.bar_popout.destroy()
+        self.bar_popout = None
 
-        ctk.CTkLabel(top, text="Style").grid(row=0, column=0, padx=(0, 6), sticky="w")
-        self.style_menu = ctk.CTkOptionMenu(
-            top, values=[STYLES[k]["label"] for k in STYLE_ORDER],
-            command=self._on_style_change, width=160)
-        self.style_menu.set(STYLES[self.style_key]["label"])
-        self.style_menu.grid(row=0, column=1, padx=(0, 16))
+    def _toggle_bar_builder(self):
+        if self.bar_popout and self.bar_popout.winfo_exists():
+            self._close_bar_builder()
+            return
+        self.bar_popout = ctk.CTkToplevel(self)
+        # Same Windows/CustomTkinter title-bar quirk as the practice
+        # overlay -- withdraw then deiconify so there's always a title
+        # bar and close button.
+        self.bar_popout.withdraw()
+        self.bar_popout.title("RS3 Companion — Bar Builder")
+        self.bar_popout.geometry("820x700+120+80")
+        self.bar_popout.configure(fg_color=BG)
+        self.bar_popout.protocol("WM_DELETE_WINDOW", self._close_bar_builder)
+        self.bar_popout.bind("<Escape>", lambda e: self._close_bar_builder())
 
-        ctk.CTkLabel(top, text="Boss").grid(row=0, column=2, padx=(0, 6), sticky="w")
-        self.boss_menu = ctk.CTkOptionMenu(
-            top, values=[BOSSES[k]["label"] for k in BOSS_ORDER],
-            command=self._on_boss_change, width=220)
-        self.boss_menu.set(BOSSES[self.boss_key]["label"])
-        self.boss_menu.grid(row=0, column=3, padx=(0, 16))
-
-        ctk.CTkLabel(top, text="Mode").grid(row=0, column=4, padx=(0, 6), sticky="w")
-        self.mode_menu = ctk.CTkOptionMenu(
-            top, values=["Revo Basics + Manual", "Revo++ (Full Auto)"],
-            command=self._on_mode_change, width=190)
-        self.mode_menu.set("Revo Basics + Manual" if self.mode == "revo_basics"
-                            else "Revo++ (Full Auto)")
-        self.mode_menu.grid(row=0, column=5)
-
-        self.bar_scroll = ctk.CTkScrollableFrame(parent, fg_color=SURFACE)
-        self.bar_scroll.pack(fill="both", expand=True, padx=8, pady=8)
-
+        self.bar_scroll = ctk.CTkScrollableFrame(self.bar_popout, fg_color=SURFACE)
+        self.bar_scroll.pack(fill="both", expand=True, padx=12, pady=12)
         self._render_bar_builder()
 
+        self.bar_popout.after(150, self.bar_popout.deiconify)
+
     def _render_bar_builder(self):
+        if not (self.bar_popout and self.bar_popout.winfo_exists()):
+            return  # popout isn't open -- nothing to draw into
         for w in self.bar_scroll.winfo_children():
             w.destroy()
 
@@ -397,7 +423,7 @@ class App(ctk.CTk):
         self.config_store.data["last_mode"] = self.mode
         self._render_bar_builder()
 
-    # ---------- Practice tab ----------
+    # ---------- Practice (main page) ----------
 
     def _build_practice(self, parent):
         wrap = ctk.CTkFrame(parent, fg_color="transparent")
@@ -547,7 +573,28 @@ class App(ctk.CTk):
         y = event.y_root - self._overlay_drag_y
         self.overlay.geometry(f"+{x}+{y}")
 
-    # ---------- Settings tab ----------
+    # ---------- Settings popout ----------
+
+    def _close_settings(self):
+        if self.settings_popout and self.settings_popout.winfo_exists():
+            self.settings_popout.destroy()
+        self.settings_popout = None
+
+    def _toggle_settings(self):
+        if self.settings_popout and self.settings_popout.winfo_exists():
+            self._close_settings()
+            return
+        self.settings_popout = ctk.CTkToplevel(self)
+        self.settings_popout.withdraw()
+        self.settings_popout.title("RS3 Companion — Settings")
+        self.settings_popout.geometry("760x640+160+100")
+        self.settings_popout.configure(fg_color=BG)
+        self.settings_popout.protocol("WM_DELETE_WINDOW", self._close_settings)
+        self.settings_popout.bind("<Escape>", lambda e: self._close_settings())
+
+        self._build_settings(self.settings_popout)
+
+        self.settings_popout.after(150, self.settings_popout.deiconify)
 
     def _build_settings(self, parent):
         scroll = ctk.CTkScrollableFrame(parent, fg_color=SURFACE)

@@ -41,15 +41,25 @@ CustomTkinter windows occasionally render with no OS title bar on
 Windows (a known upstream quirk). The app works around it on launch, but
 if you ever end up with a window you can't find a title bar or × on:
 Alt+F4 with it focused, or Ctrl+Shift+Esc → Task Manager → end
-`python.exe`/`pythonw.exe`. The pop-out overlay also has its own ×
-button and closes on Escape regardless of title bar state.
+`python.exe`/`pythonw.exe`. Every pop-out window also closes on Escape
+regardless of title bar state.
 
-## The three tabs
+## Layout
 
-**Bar Builder** — pick Style / Boss / Mode at the top. Shows the full
-ordered bar (ability, type, and its role under whichever mode you
-picked), boss-specific mechanics and bar adjustments when a boss is
-selected, the style's defensive/utility matrix, and gear/relic tuning.
+Practice is the main window — it's what you actually watch during a
+kill, so it's what opens. Style / Boss / Mode selectors sit in a bar
+across the top, and two buttons open the rest as separate pop-out
+windows you can leave closed while playing:
+
+- **Bar Builder** — the full ordered bar (ability, type, and its role
+  under whichever mode you picked), boss-specific mechanics and bar
+  adjustments when a boss is selected, the style's defensive/utility
+  matrix, and gear/relic tuning. Reference material — check it before a
+  kill, not something you need open during one.
+- **Settings** — key bindings and the updater (see below).
+
+Changing Style / Boss / Mode on the main window updates the Bar Builder
+pop-out live if it's open.
 
 **Practice** — the tick metronome. Press Start the instant your first
 hit lands (that's tick 0), and it cues the manual threshold/ultimate
@@ -85,8 +95,8 @@ and check/apply updates.
 | F11 | Cycle style |
 | F12 | Toggle the audio cue |
 
-All five also have buttons/switches in the Practice tab if you'd rather
-click than remember function keys.
+All five also have buttons/switches on the Practice page if you'd
+rather click than remember function keys.
 
 ## Updating
 
@@ -104,7 +114,7 @@ If your repo checkout has local changes, the automatic git-pull path
 skips itself rather than risk them — use Settings → Updates → **Check
 for updates** to see why, and resolve them before it'll proceed.
 
-Manual: Settings tab → Updates → **Check for updates** any time, then
+Manual: Settings → Updates → **Check for updates** any time, then
 **Update now**. Same underlying logic as the automatic check, just
 triggered on demand. **Open releases page** is always there too, for a
 plain manual download.
