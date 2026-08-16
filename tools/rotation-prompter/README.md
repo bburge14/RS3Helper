@@ -1,23 +1,28 @@
 # RS3 Rotation Prompter
 
-A small always-on-top overlay that prompts you with the next manual
-ability to press, paced by a tick metronome. It's built to sit alongside
-a "Revo Basics" bar (see `../../guides/four-styles-one-bar.html`): basics
-fire on their own via Revolution, so this only cues the threshold/
-ultimate presses Revolution won't make for you.
+A small always-on-top overlay that cues the next manual ability, paced
+by a tick metronome. It's built to sit alongside a "Revo Basics" bar
+(see `../../guides/four-styles-one-bar.html`): basics fire on their own
+via Revolution, so this only cues the threshold/ultimate presses
+Revolution won't make for you.
 
-## What it does and doesn't do
+## Two modes
 
-- Draws a small overlay window and beeps on cue. That's it.
-- It does **not** send any keystrokes or clicks into RuneScape, and does
-  **not** read RuneScape's memory, pixels, or process.
-- The only input it reads is its own control hotkeys (start/pause/reset/
-  switch style), so you can drive it without alt-tabbing.
+- **Prompt mode** (default): shows/beeps the next ability. Sends nothing
+  anywhere — the only input it reads is its own control hotkeys.
+- **Autopress mode** (F8, off by default): on the same cue, also sends
+  the mapped hotkey from `rotations.py` (`STYLES[style]["keys"]`) to
+  whichever window currently has focus.
 
-This split matters: a program that presses game hotkeys for you is
-macroing under Jagex's rules, even if a human designed the rotation, and
-risks the account being banned. A program that just tells you what to
-press, leaving the actual input to you, doesn't cross that line.
+Autopress is system-wide keystroke injection, not something scoped to
+one game window — whatever has focus receives the key. Edit the `keys`
+map in `rotations.py` to match your actual action-bar bindings before
+trusting it; a stale mapping presses the wrong ability. This is built
+for a self-hosted/private server, not Jagex's live game — on the live
+game, a program that presses ability hotkeys for you is macroing under
+Jagex's rules regardless of who designed the rotation, and risks the
+account being banned. That risk doesn't apply to your own server, but
+it's real if this ever points at a live account.
 
 ## Setup
 
@@ -47,10 +52,14 @@ keys over an elevated window, and RS3 sometimes launches elevated.
 
 | Key | Action |
 |-----|--------|
+| F8  | Toggle autopress mode (off = prompt-only) |
 | F9  | Start / pause the metronome |
 | F10 | Reset to the start of the opener |
 | F11 | Cycle style (Necromancy → Magic → Ranged → Melee) |
 | F12 | Toggle the audio cue |
+
+The overlay shows **PROMPT ONLY** or **AUTOPRESS ARMED** at the bottom
+so it's always visible which mode you're in.
 
 ## Tuning the cadence
 

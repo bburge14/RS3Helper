@@ -1,29 +1,32 @@
 """
-RS3 Rotation Prompter -- a display-only overlay + tick metronome.
+RS3 Rotation Prompter -- tick-metronome overlay with an optional
+autopress mode.
 
-What this does:
-  - Shows the next manual ability to press, based on the rotations in
-    rotations.py, advanced by a tick counter you start yourself.
-  - Optionally beeps on each cue.
+Two modes:
+  - Prompt mode (default): shows/beeps the next ability to press. Sends
+    nothing anywhere.
+  - Autopress mode (F8, off by default): sends the mapped hotkey
+    (rotations.py -> STYLES[style]["keys"]) to whatever window currently
+    has focus, on the same cue. Make sure that's your game window, and
+    that the key map actually matches your in-game action bar before you
+    rely on it.
 
-What this deliberately does NOT do:
-  - Send any keystrokes or clicks to RuneScape, or any other window.
-  - Read RuneScape's memory, pixels, or process in any way.
-It only listens for its OWN control hotkeys (start/stop/reset/switch
-style) and draws a small always-on-top window. That distinction matters:
-software that presses game hotkeys for you is macroing under Jagex's
-rules and risks a ban, even when it's just replaying a rotation like
-this one. This tool leaves every game input to you.
+Autopress sends real keystrokes system-wide -- to whatever has focus,
+not RS3 specifically. If Jagex's live servers are ever in the picture,
+this is macroing under their rules and risks that account; this exists
+for a self-hosted/private server where that's not a factor.
 
-Controls (global hotkeys -- work even while RS3 has focus):
+Controls (global hotkeys -- work even while the game has focus):
+  F8   Toggle autopress mode on/off (off = prompt-only)
   F9   Start / pause the tick metronome
   F10  Reset to the start of the opener
   F11  Cycle style (Necromancy -> Magic -> Ranged -> Melee)
   F12  Toggle the audio cue on/off
 
-If hotkeys don't respond while RS3 is focused, try running this from an
-Administrator terminal -- Windows blocks low-privilege processes from
-hooking keys over an elevated window, and RS3 sometimes runs elevated.
+If hotkeys (or autopress) don't reach the game window, try running this
+from an Administrator terminal -- Windows blocks a low-privilege process
+from hooking/sending keys over an elevated window, and games sometimes
+launch elevated.
 """
 
 import sys
@@ -54,6 +57,7 @@ class Prompter:
         self.style_idx = 0
         self.running = False
         self.sound_on = True
+        self.autopress = False
         self.tick = 0
         self.step_idx = -1  # -1 = not started
         self.in_loop = False
@@ -105,8 +109,14 @@ class Prompter:
             font=("Consolas", 9))
         self.tick_label.pack(anchor="w", pady=(8, 0))
 
+        self.mode_label = tk.Label(
+            body, text="PROMPT ONLY", fg="#5c5968", bg="#141219",
+            font=("Segoe UI", 8, "bold"))
+        self.mode_label.pack(anchor="w", side="bottom", pady=(0, 2))
+
         self.hint_label = tk.Label(
-            body, text="F9 start/pause  F10 reset  F11 style  F12 sound",
+            body,
+            text="F8 autopress  F9 start/pause  F10 reset  F11 style  F12 sound",
             fg="#5c5968", bg="#141219", font=("Consolas", 8))
         self.hint_label.pack(anchor="w", side="bottom")
 
@@ -127,10 +137,18 @@ class Prompter:
     # ---------- hotkeys ----------
 
     def _bind_hotkeys(self):
+        keyboard.add_hotkey("f8", self._toggle_autopress)
         keyboard.add_hotkey("f9", self._toggle_running)
         keyboard.add_hotkey("f10", self._reset)
         keyboard.add_hotkey("f11", self._cycle_style)
         keyboard.add_hotkey("f12", self._toggle_sound)
+
+    def _toggle_autopress(self):
+        self.autopress = not self.autopress
+        if self.autopress:
+            self.mode_label.configure(text="AUTOPRESS ARMED", fg="#ff7a70")
+        else:
+            self.mode_label.configure(text="PROMPT ONLY", fg="#5c5968")
 
     def _toggle_running(self):
         self.running = not self.running
@@ -204,6 +222,7 @@ class Prompter:
             self._cue()
 
     def _render_current(self, name):
+        self.current_name = name
         self.now_label.configure(text=name)
         upcoming = self._peek_next(name)
         self.next_label.configure(text=f"next: {upcoming}" if upcoming else "")
@@ -221,6 +240,10 @@ class Prompter:
     def _cue(self):
         if self.sound_on:
             beep()
+        if self.autopress:
+            key = self.style["keys"].get(self.current_name)
+            if key:
+                keyboard.send(key)
 
 
 def main():

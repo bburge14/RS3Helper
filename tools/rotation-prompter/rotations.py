@@ -10,6 +10,11 @@ speed (gear, aura, style) if the default cadence feels off.
 Each style is built for "Revo Basics" bars: basics auto-fire under
 Revolution, so this only prompts the manual threshold/ultimate presses --
 the stuff Revolution won't press for you.
+
+`keys` maps each ability name to the hotkey autopress mode will send.
+These are placeholder defaults (1-7) -- edit them to match your actual
+in-game action bar bindings before enabling autopress, or it'll press
+the wrong slot.
 """
 
 STYLES = {
@@ -25,6 +30,15 @@ STYLES = {
         ],
         "loop": ["Death Skulls", "Bloodsplicer"],
         "loop_interval_ticks": 8,
+        "keys": {
+            "Volley of Souls": "3",
+            "Bloat": "4",
+            "Command Vengeful Ghost": "5",
+            "Invoke Death": "6",
+            "Living Death": "1",
+            "Death Skulls": "2",
+            "Bloodsplicer": "7",
+        },
     },
     "magic": {
         "label": "Magic",
@@ -37,6 +51,13 @@ STYLES = {
         ],
         "loop": ["Concentrated Blast", "Asphyxiate"],
         "loop_interval_ticks": 8,
+        "keys": {
+            "Combust": "4",
+            "Wild Magic": "5",
+            "Asphyxiate": "3",
+            "Sunshine": "1",
+            "Concentrated Blast": "2",
+        },
     },
     "ranged": {
         "label": "Ranged",
@@ -47,6 +68,11 @@ STYLES = {
         ],
         "loop": ["Snipe", "Ricochet"],
         "loop_interval_ticks": 8,
+        "keys": {
+            "Rapid Fire": "1",
+            "Snipe": "2",
+            "Ricochet": "3",
+        },
     },
     "melee": {
         "label": "Melee",
@@ -58,6 +84,11 @@ STYLES = {
         ],
         "loop": ["Fury", "Assault"],
         "loop_interval_ticks": 8,
+        "keys": {
+            "Fury": "2",
+            "Assault": "3",
+            "Meteor Strike / Death's Swiftness": "1",
+        },
     },
 }
 
