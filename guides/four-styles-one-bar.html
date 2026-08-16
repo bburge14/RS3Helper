@@ -1,0 +1,607 @@
+<title>Four Styles, One Bar</title>
+
+<style>
+  :root {
+    --bg: #f1efe8;
+    --surface: #ffffff;
+    --surface-2: #e9e6dc;
+    --text: #211f2b;
+    --text-muted: #5c5968;
+    --border: #d9d5c8;
+    --border-strong: #c3bfae;
+
+    --necro: #7a4fd6;
+    --necro-soft: #efe9fb;
+    --magic: #2f6fe0;
+    --magic-soft: #e9f0fd;
+    --ranged: #268a5a;
+    --ranged-soft: #e6f4ec;
+    --melee: #c9382f;
+    --melee-soft: #fbeae8;
+
+    --pill-revo: #1c6b5a;
+    --pill-revo-bg: #dff2ec;
+    --pill-manual: #8a5a12;
+    --pill-manual-bg: #f7ecd9;
+
+    --font-display: "Bahnschrift", "SF Compact Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+    --font-body: Georgia, "Iowan Old Style", "Palatino Linotype", "Noto Serif", serif;
+    --font-mono: "Cascadia Code", "SF Mono", "IBM Plex Mono", ui-monospace, "Consolas", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141219;
+      --surface: #1c1a24;
+      --surface-2: #26232f;
+      --text: #ece9f5;
+      --text-muted: #a39dbb;
+      --border: #322e3f;
+      --border-strong: #443f56;
+
+      --necro: #a780f2;
+      --necro-soft: #2a2140;
+      --magic: #6ea3ff;
+      --magic-soft: #1c2c48;
+      --ranged: #57c98a;
+      --ranged-soft: #17332590;
+      --ranged-soft: #17332599;
+      --melee: #ff7a70;
+      --melee-soft: #3a1f1e;
+
+      --pill-revo: #6fd6b8;
+      --pill-revo-bg: #163330;
+      --pill-manual: #e8b96a;
+      --pill-manual-bg: #392c15;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #141219;
+    --surface: #1c1a24;
+    --surface-2: #26232f;
+    --text: #ece9f5;
+    --text-muted: #a39dbb;
+    --border: #322e3f;
+    --border-strong: #443f56;
+
+    --necro: #a780f2;
+    --necro-soft: #2a2140;
+    --magic: #6ea3ff;
+    --magic-soft: #1c2c48;
+    --ranged: #57c98a;
+    --ranged-soft: #173325;
+    --melee: #ff7a70;
+    --melee-soft: #3a1f1e;
+
+    --pill-revo: #6fd6b8;
+    --pill-revo-bg: #163330;
+    --pill-manual: #e8b96a;
+    --pill-manual-bg: #392c15;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 6rem;
+  }
+
+  header.masthead {
+    border-bottom: 3px solid var(--text);
+    padding-bottom: 1.75rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .kicker {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: 0 0 0.6rem;
+  }
+
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    letter-spacing: 0.01em;
+    margin: 0 0 0.6rem;
+    text-wrap: balance;
+  }
+
+  .dek {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  .scope-note {
+    margin-top: 1.1rem;
+    padding: 0.85rem 1rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .scope-note strong { color: var(--text); }
+
+  nav.jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.5rem 0 0;
+  }
+  nav.jump a {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--jump-color, var(--border-strong));
+    color: var(--jump-color, var(--text));
+    background: var(--jump-bg, transparent);
+  }
+  nav.jump a:focus-visible, .wrap a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
+  }
+  nav.jump a.necro { --jump-color: var(--necro); --jump-bg: var(--necro-soft); }
+  nav.jump a.magic { --jump-color: var(--magic); --jump-bg: var(--magic-soft); }
+  nav.jump a.ranged { --jump-color: var(--ranged); --jump-bg: var(--ranged-soft); }
+  nav.jump a.melee { --jump-color: var(--melee); --jump-bg: var(--melee-soft); }
+
+  section.style-section {
+    margin-top: 3.5rem;
+    border-left: 5px solid var(--accent);
+    padding-left: 1.5rem;
+  }
+  section.style-section#necromancy { --accent: var(--necro); --accent-soft: var(--necro-soft); }
+  section.style-section#magic { --accent: var(--magic); --accent-soft: var(--magic-soft); }
+  section.style-section#ranged { --accent: var(--ranged); --accent-soft: var(--ranged-soft); }
+  section.style-section#melee { --accent: var(--melee); --accent-soft: var(--melee-soft); }
+
+  .style-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  h2.style-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.85rem;
+    margin: 0;
+    color: var(--accent);
+  }
+
+  .style-meta {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin: 1.1rem 0 1.6rem;
+  }
+  @media (max-width: 640px) {
+    .overview-grid { grid-template-columns: 1fr; }
+  }
+  .overview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.7rem 0.85rem;
+  }
+  .overview-card .label {
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 0.25rem;
+  }
+  .overview-card .value {
+    font-size: 0.92rem;
+    margin: 0;
+  }
+
+  h3.block-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.02rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text);
+    margin: 2rem 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 4px; }
+
+  table.bar {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    font-size: 0.88rem;
+    min-width: 620px;
+  }
+  table.bar th, table.bar td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.bar thead th {
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border-strong);
+  }
+  table.bar tbody tr:last-child td { border-bottom: none; }
+  table.bar td.slot {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    width: 2.4rem;
+  }
+  table.bar td.ability {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .tag {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .tag.ultimate { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+  .tag.threshold { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); }
+  .tag.basic { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+
+  .mode-pill {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .mode-pill.revo { color: var(--pill-revo); background: var(--pill-revo-bg); }
+  .mode-pill.manual { color: var(--pill-manual); background: var(--pill-manual-bg); }
+
+  .opener-flow {
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 0.9rem 1rem;
+    line-height: 2;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .opener-flow .arrow { color: var(--text-muted); margin: 0 0.35rem; }
+
+  .matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+  @media (max-width: 640px) { .matrix { grid-template-columns: 1fr; } }
+  .matrix .row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.7rem 0.85rem;
+  }
+  .matrix .row .m-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--accent);
+    margin: 0 0 0.2rem;
+  }
+  .matrix .row .m-counter {
+    font-size: 0.86rem;
+    margin: 0;
+    color: var(--text);
+  }
+
+  .gear-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+  @media (max-width: 640px) { .gear-grid { grid-template-columns: 1fr; } }
+  .gear-grid .g {
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.7rem 0.85rem;
+  }
+  .gear-grid .g .label {
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 0.3rem;
+  }
+  .gear-grid .g .value { font-size: 0.85rem; margin: 0; }
+
+  footer.doc-footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">RS3 Combat Architect &mdash; Field Reference</p>
+    <h1 class="title">Four Styles, One Bar</h1>
+    <p class="dek">A general-purpose PvM/slayer/bossing loadout for every combat style &mdash; Necromancy, Magic, Ranged, and Melee &mdash; each built for both Revolution++ and Revolution Basics + manual play.</p>
+    <div class="scope-note">
+      <strong>Scope:</strong> these are style-general bars, not tuned for one specific boss's phase mechanics. For a fight with hard enrage timers, damage caps, or reflect phases, tell me the target and I'll re-order the bar around it.<br>
+      <strong>Note on precision:</strong> Revolution's internal left-to-right priority and ability availability shift with Jagex balance passes &mdash; cross-check the exact order against your in-game ability book before a serious kill.
+    </div>
+    <nav class="jump">
+      <a class="necro" href="#necromancy">Necromancy</a>
+      <a class="magic" href="#magic">Magic</a>
+      <a class="ranged" href="#ranged">Ranged</a>
+      <a class="melee" href="#melee">Melee</a>
+    </nav>
+  </header>
+
+  <!-- ================= NECROMANCY ================= -->
+  <section class="style-section" id="necromancy">
+    <div class="style-head">
+      <h2 class="style-name">Necromancy</h2>
+      <span class="style-meta">2H &mdash; Death Guard / Skull Sceptre</span>
+    </div>
+
+    <div class="overview-grid">
+      <div class="overview-card"><p class="label">Target</p><p class="value">General PvM / Slayer / Bossing</p></div>
+      <div class="overview-card"><p class="label">Style</p><p class="value">2H Necromancy</p></div>
+      <div class="overview-card"><p class="label">Resource</p><p class="value">Souls (built by basics, spent by Living Death)</p></div>
+    </div>
+
+    <h3 class="block-title">Revolution Bar Layout</h3>
+    <div class="table-scroll">
+      <table class="bar">
+        <thead><tr><th>Slot</th><th>Ability</th><th>Type</th><th>Revo++ role</th><th>Revo Basics role</th></tr></thead>
+        <tbody>
+          <tr><td class="slot">1</td><td class="ability">Living Death</td><td><span class="tag ultimate">Ultimate</span></td><td>Fires the instant a soul stack is banked at 100% &mdash; front-loaded so it never gets stuck behind basics</td><td><span class="mode-pill manual">Manual</span> &mdash; hold for a soul-stacked window, don't let Revo spend it</td></tr>
+          <tr><td class="slot">2</td><td class="ability">Death Skulls</td><td><span class="tag threshold">Threshold</span></td><td>AoE burst the moment 50% adrenaline is hit on packs</td><td><span class="mode-pill manual">Manual</span> &mdash; save for 2+ targets, otherwise use Bloodsplicer</td></tr>
+          <tr><td class="slot">3</td><td class="ability">Bloodsplicer</td><td><span class="tag threshold">Threshold</span></td><td>Single-target threshold dump between Living Death windows</td><td><span class="mode-pill manual">Manual</span> &mdash; single-target default at 50%</td></tr>
+          <tr><td class="slot">4</td><td class="ability">Touch of Death</td><td><span class="tag basic">Basic</span></td><td>Highest single-target adrenaline-per-cast basic &mdash; sustains the bar</td><td><span class="mode-pill revo">On bar</span> &mdash; primary filler</td></tr>
+          <tr><td class="slot">5</td><td class="ability">Finger of Death</td><td><span class="tag basic">Basic</span></td><td>Channelled multi-hit, fires when target stays still</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">6</td><td class="ability">Volley of Souls</td><td><span class="tag basic">Basic</span></td><td>AoE basic, marks targets to feed soul generation</td><td><span class="mode-pill revo">On bar</span> &mdash; keep early for mark uptime</td></tr>
+          <tr><td class="slot">7</td><td class="ability">Bloat</td><td><span class="tag basic">Basic</span></td><td>Applies stacking DoT, cheap adrenaline filler</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">8</td><td class="ability">Command Vengeful Ghost</td><td><span class="tag threshold">Threshold</span></td><td>Persistent summon DPS, recast on cooldown, low priority vs. burst</td><td><span class="mode-pill manual">Manual</span> &mdash; recast whenever it drops</td></tr>
+          <tr><td class="slot">9</td><td class="ability">Split Soul</td><td><span class="tag threshold">Threshold</span></td><td>Held out of Revo entirely &mdash; self-heal, only fires under HP pressure</td><td><span class="mode-pill manual">Manual</span> &mdash; reactive heal, never automatic</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="block-title">Manual Inputs &amp; Rotation Opener</h3>
+    <div class="opener-flow">Volley&nbsp;of&nbsp;Souls<span class="arrow">&rarr;</span>Bloat<span class="arrow">&rarr;</span>Command&nbsp;Vengeful&nbsp;Ghost<span class="arrow">&rarr;</span>Touch&nbsp;of&nbsp;Death&nbsp;/&nbsp;Finger&nbsp;of&nbsp;Death&nbsp;(build&nbsp;to&nbsp;100%)<span class="arrow">&rarr;</span>Invoke&nbsp;Death<span class="arrow">&rarr;</span>Living&nbsp;Death&nbsp;(dump)<span class="arrow">&rarr;</span>Death&nbsp;Skulls&nbsp;/&nbsp;Bloodsplicer&nbsp;on&nbsp;cooldown</div>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-top:0.6rem;"><strong>Weapon special:</strong> pop any Death Guard/Skull Sceptre passive procs on cooldown &mdash; they're free damage and don't compete with the ability queue.</p>
+
+    <h3 class="block-title">Defensive &amp; Utility Matrix</h3>
+    <div class="matrix">
+      <div class="row"><p class="m-name">Bind / stun applied to you</p><p class="m-counter">Freedom, timed on cast &mdash; Necromancy has no built-in cleanse</p></div>
+      <div class="row"><p class="m-name">Incoming burst / special</p><p class="m-counter">Debilitate pre-emptively, or Anticipation if the hit is a single flagged special</p></div>
+      <div class="row"><p class="m-name">Sustained HP pressure</p><p class="m-counter">Split Soul on cooldown &mdash; it's the only style-native sustain, don't let Revo eat it</p></div>
+      <div class="row"><p class="m-name">Multi-target pull</p><p class="m-counter">Volley of Souls + Death Skulls take priority over single-target Bloodsplicer</p></div>
+    </div>
+
+    <h3 class="block-title">Gear &amp; Relic Tuning</h3>
+    <div class="gear-grid">
+      <div class="g"><p class="label">Aura</p><p class="value">Reaper's / Berserker &mdash; whichever your unlock tier allows for sustained adrenaline output</p></div>
+      <div class="g"><p class="label">Pocket</p><p class="value">Necromancy-scaling familiar pouch or a flat damage pocket slot</p></div>
+      <div class="g"><p class="label">Relics / Perks</p><p class="value">Anything that extends soul-stack duration or reduces Living Death's cooldown pays back the most</p></div>
+    </div>
+  </section>
+
+  <!-- ================= MAGIC ================= -->
+  <section class="style-section" id="magic">
+    <div class="style-head">
+      <h2 class="style-name">Magic</h2>
+      <span class="style-meta">Dual Wield or 2H &mdash; Chaotic / Staff of Armadyl</span>
+    </div>
+
+    <div class="overview-grid">
+      <div class="overview-card"><p class="label">Target</p><p class="value">General PvM / Slayer / Bossing</p></div>
+      <div class="overview-card"><p class="label">Style</p><p class="value">Dual Wield or 2H Magic</p></div>
+      <div class="overview-card"><p class="label">Resource</p><p class="value">Combust DoT window (gates Asphyxiate)</p></div>
+    </div>
+
+    <h3 class="block-title">Revolution Bar Layout</h3>
+    <div class="table-scroll">
+      <table class="bar">
+        <thead><tr><th>Slot</th><th>Ability</th><th>Type</th><th>Revo++ role</th><th>Revo Basics role</th></tr></thead>
+        <tbody>
+          <tr><td class="slot">1</td><td class="ability">Sunshine</td><td><span class="tag ultimate">Ultimate</span></td><td>Channelled buff+damage ultimate, fired at 100% for a sustained high-output window</td><td><span class="mode-pill manual">Manual</span> &mdash; time it to the start of a burn phase</td></tr>
+          <tr><td class="slot">2</td><td class="ability">Concentrated Blast</td><td><span class="tag threshold">Threshold</span></td><td>Highest single-hit threshold, fires whenever 50% is banked</td><td><span class="mode-pill manual">Manual</span> &mdash; default 50% dump</td></tr>
+          <tr><td class="slot">3</td><td class="ability">Asphyxiate</td><td><span class="tag threshold">Threshold</span></td><td>Execute-style threshold, only usable while Combust's DoT is ticking on target</td><td><span class="mode-pill manual">Manual</span> &mdash; fire the instant Combust lands</td></tr>
+          <tr><td class="slot">4</td><td class="ability">Combust</td><td><span class="tag basic">Basic</span></td><td>Applies the DoT that gates Asphyxiate &mdash; kept early in priority for uptime</td><td><span class="mode-pill revo">On bar</span> &mdash; keep first</td></tr>
+          <tr><td class="slot">5</td><td class="ability">Wrack</td><td><span class="tag basic">Basic</span></td><td>Core single-target adrenaline filler</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">6</td><td class="ability">Impact</td><td><span class="tag basic">Basic</span></td><td>AoE basic with a stun component &mdash; used on packs</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">7</td><td class="ability">Dragon Breath</td><td><span class="tag threshold">Threshold</span></td><td>AoE threshold, only relevant vs. 2+ targets</td><td><span class="mode-pill manual">Manual</span> &mdash; multi-target only</td></tr>
+          <tr><td class="slot">8</td><td class="ability">Wild Magic</td><td><span class="tag threshold">Threshold</span></td><td>Style-converting filler threshold, lowest priority</td><td><span class="mode-pill manual">Manual</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="block-title">Manual Inputs &amp; Rotation Opener</h3>
+    <div class="opener-flow">Combust<span class="arrow">&rarr;</span>Wrack<span class="arrow">&rarr;</span>Impact&nbsp;(if&nbsp;packed)<span class="arrow">&rarr;</span>Wild&nbsp;Magic&nbsp;/&nbsp;Concentrated&nbsp;Blast&nbsp;(build&nbsp;to&nbsp;100%)<span class="arrow">&rarr;</span>Asphyxiate&nbsp;(while&nbsp;Combust&nbsp;is&nbsp;ticking)<span class="arrow">&rarr;</span>Sunshine<span class="arrow">&rarr;</span>Tsunami&nbsp;on&nbsp;a&nbsp;separate&nbsp;burst&nbsp;window</div>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-top:0.6rem;"><strong>Weapon special:</strong> Staff of Armadyl / chaotic procs fit anywhere in the queue &mdash; use on cooldown, they don't interrupt channelled Sunshine.</p>
+
+    <h3 class="block-title">Defensive &amp; Utility Matrix</h3>
+    <div class="matrix">
+      <div class="row"><p class="m-name">Bind / stun applied to you</p><p class="m-counter">Freedom on cast, then re-engage &mdash; magic has no innate cleanse</p></div>
+      <div class="row"><p class="m-name">Incoming burst / special</p><p class="m-counter">Resonance banked for the hit, or Devotion to redirect onto a familiar</p></div>
+      <div class="row"><p class="m-name">Target is bind/stun immune</p><p class="m-counter">Drop Impact's stun-chasing usage, prioritize Wrack/Combust uptime instead</p></div>
+      <div class="row"><p class="m-name">Multi-target pull</p><p class="m-counter">Dragon Breath and Chain outrank Concentrated Blast until the pack thins</p></div>
+    </div>
+
+    <h3 class="block-title">Gear &amp; Relic Tuning</h3>
+    <div class="gear-grid">
+      <div class="g"><p class="label">Aura</p><p class="value">Maniacal or Berserker for sustained magic uptime</p></div>
+      <div class="g"><p class="label">Pocket</p><p class="value">Magic-scaling familiar or a flat damage pocket slot</p></div>
+      <div class="g"><p class="label">Relics / Perks</p><p class="value">Anything reducing Sunshine's cooldown or extending Combust's DoT duration compounds well with this bar</p></div>
+    </div>
+  </section>
+
+  <!-- ================= RANGED ================= -->
+  <section class="style-section" id="ranged">
+    <div class="style-head">
+      <h2 class="style-name">Ranged</h2>
+      <span class="style-meta">2H Bow or Dual Wield Crossbows</span>
+    </div>
+
+    <div class="overview-grid">
+      <div class="overview-card"><p class="label">Target</p><p class="value">General PvM / Slayer / Bossing</p></div>
+      <div class="overview-card"><p class="label">Style</p><p class="value">2H Bow or DW Ranged</p></div>
+      <div class="overview-card"><p class="label">Burst source</p><p class="value">Rapid Fire &rarr; Snipe chain, not a single nuke ultimate</p></div>
+    </div>
+
+    <h3 class="block-title">Revolution Bar Layout</h3>
+    <div class="table-scroll">
+      <table class="bar">
+        <thead><tr><th>Slot</th><th>Ability</th><th>Type</th><th>Revo++ role</th><th>Revo Basics role</th></tr></thead>
+        <tbody>
+          <tr><td class="slot">1</td><td class="ability">Rapid Fire</td><td><span class="tag basic">Channelled</span></td><td>Fires when the target holds still &mdash; highest sustained output, leftmost so Revo grabs it whenever safe</td><td><span class="mode-pill manual">Manual</span> &mdash; only when you can hold position</td></tr>
+          <tr><td class="slot">2</td><td class="ability">Snipe</td><td><span class="tag threshold">Threshold</span></td><td>Unreflectable single-target burst at 50%, default dump</td><td><span class="mode-pill manual">Manual</span></td></tr>
+          <tr><td class="slot">3</td><td class="ability">Ricochet</td><td><span class="tag threshold">Threshold</span></td><td>AoE threshold, only relevant vs. 2+ targets</td><td><span class="mode-pill manual">Manual</span> &mdash; multi-target only</td></tr>
+          <tr><td class="slot">4</td><td class="ability">Piercing Shot</td><td><span class="tag basic">Basic</span></td><td>Core single-target filler, cheap and reliable</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">5</td><td class="ability">Snap Shot</td><td><span class="tag basic">Basic</span></td><td>Fast-hitting basic, sustains adrenaline between thresholds</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">6</td><td class="ability">Fragmentation Shot</td><td><span class="tag threshold">Threshold</span></td><td>Secondary AoE threshold behind Ricochet</td><td><span class="mode-pill manual">Manual</span> &mdash; multi-target only</td></tr>
+          <tr><td class="slot">7</td><td class="ability">Needle Strike</td><td><span class="tag threshold">Threshold</span></td><td>Stun-threshold, held for mechanics that need a hard interrupt</td><td><span class="mode-pill manual">Manual</span> &mdash; mechanic-reactive, not automatic</td></tr>
+          <tr><td class="slot">8</td><td class="ability">Binding Shot</td><td><span class="tag basic">Basic</span></td><td>Kept out of Revo &mdash; only fired to lock a target that must not move</td><td><span class="mode-pill manual">Manual</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="block-title">Manual Inputs &amp; Rotation Opener</h3>
+    <div class="opener-flow">Piercing&nbsp;Shot<span class="arrow">&rarr;</span>Snap&nbsp;Shot&nbsp;(build&nbsp;adrenaline)<span class="arrow">&rarr;</span>Rapid&nbsp;Fire&nbsp;(hold&nbsp;position)<span class="arrow">&rarr;</span>Snipe&nbsp;/&nbsp;Ricochet&nbsp;at&nbsp;50%<span class="arrow">&rarr;</span>repeat&nbsp;threshold&nbsp;chain&nbsp;to&nbsp;100%</div>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-top:0.6rem;"><strong>Weapon special:</strong> Ranged bar output leans on weapon passives (Ascension crossbow procs, Dragon Hunter Crossbow bonus vs. dragons) &mdash; fire these on cooldown between threshold windows.</p>
+
+    <h3 class="block-title">Defensive &amp; Utility Matrix</h3>
+    <div class="matrix">
+      <div class="row"><p class="m-name">Bind / stun applied to you</p><p class="m-counter">Freedom on cast &mdash; ranged has no innate cleanse</p></div>
+      <div class="row"><p class="m-name">Incoming burst / special</p><p class="m-counter">Debilitate pre-emptively, Anticipation on a flagged single special</p></div>
+      <div class="row"><p class="m-name">Target must not reposition</p><p class="m-counter">Binding Shot, cast manually and never left to Revo</p></div>
+      <div class="row"><p class="m-name">Multi-target pull</p><p class="m-counter">Ricochet and Fragmentation Shot outrank Snipe until the pack thins</p></div>
+    </div>
+
+    <h3 class="block-title">Gear &amp; Relic Tuning</h3>
+    <div class="gear-grid">
+      <div class="g"><p class="label">Aura</p><p class="value">Precise or Berserker for sustained ranged output</p></div>
+      <div class="g"><p class="label">Pocket</p><p class="value">Ranged-scaling familiar or a flat damage pocket slot</p></div>
+      <div class="g"><p class="label">Relics / Perks</p><p class="value">Anything increasing Rapid Fire uptime or reducing Snipe's cooldown compounds well with this bar</p></div>
+    </div>
+  </section>
+
+  <!-- ================= MELEE ================= -->
+  <section class="style-section" id="melee">
+    <div class="style-head">
+      <h2 class="style-name">Melee</h2>
+      <span class="style-meta">Dual Wield or 2H</span>
+    </div>
+
+    <div class="overview-grid">
+      <div class="overview-card"><p class="label">Target</p><p class="value">General PvM / Slayer / Bossing</p></div>
+      <div class="overview-card"><p class="label">Style</p><p class="value">Dual Wield or 2H Melee</p></div>
+      <div class="overview-card"><p class="label">Signature opener</p><p class="value">Fury &mdash; 50% adrenaline threshold, front-loaded on every kill</p></div>
+    </div>
+
+    <h3 class="block-title">Revolution Bar Layout</h3>
+    <div class="table-scroll">
+      <table class="bar">
+        <thead><tr><th>Slot</th><th>Ability</th><th>Type</th><th>Revo++ role</th><th>Revo Basics role</th></tr></thead>
+        <tbody>
+          <tr><td class="slot">1</td><td class="ability">Meteor Strike / Death's Swiftness</td><td><span class="tag ultimate">Ultimate</span></td><td>2H or DW ultimate, dumped the instant 100% is reached</td><td><span class="mode-pill manual">Manual</span> &mdash; time to a guaranteed-hit window</td></tr>
+          <tr><td class="slot">2</td><td class="ability">Fury</td><td><span class="tag threshold">Threshold</span></td><td>50%-cost opener, fires as soon as adrenaline allows &mdash; highest damage-per-adrenaline in the kit</td><td><span class="mode-pill manual">Manual</span> &mdash; always the opener</td></tr>
+          <tr><td class="slot">3</td><td class="ability">Assault</td><td><span class="tag threshold">Threshold</span></td><td>Secondary single-target threshold dump</td><td><span class="mode-pill manual">Manual</span></td></tr>
+          <tr><td class="slot">4</td><td class="ability">Slice</td><td><span class="tag basic">Basic</span></td><td>Core single-target filler</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">5</td><td class="ability">Punish</td><td><span class="tag basic">Basic</span></td><td>High adrenaline-per-cast basic</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">6</td><td class="ability">Havoc</td><td><span class="tag basic">Basic</span></td><td>Sustains adrenaline between thresholds</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">7</td><td class="ability">Sever</td><td><span class="tag basic">Basic</span></td><td>Bleed-applying basic, cheap filler</td><td><span class="mode-pill revo">On bar</span></td></tr>
+          <tr><td class="slot">8</td><td class="ability">Cleave / Quake</td><td><span class="tag threshold">Threshold</span></td><td>AoE threshold, only relevant vs. 2+ targets</td><td><span class="mode-pill manual">Manual</span> &mdash; multi-target only</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="block-title">Manual Inputs &amp; Rotation Opener</h3>
+    <div class="opener-flow">Fury&nbsp;(as&nbsp;soon&nbsp;as&nbsp;50%)<span class="arrow">&rarr;</span>Assault<span class="arrow">&rarr;</span>Slice&nbsp;/&nbsp;Punish&nbsp;/&nbsp;Havoc&nbsp;(build&nbsp;to&nbsp;100%)<span class="arrow">&rarr;</span>Meteor&nbsp;Strike&nbsp;/&nbsp;Death's&nbsp;Swiftness&nbsp;(dump)<span class="arrow">&rarr;</span>repeat&nbsp;threshold&nbsp;chain</div>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-top:0.6rem;"><strong>Weapon special:</strong> claw/sword specs fire on cooldown between threshold dumps &mdash; don't hold them waiting for 100%.</p>
+
+    <h3 class="block-title">Defensive &amp; Utility Matrix</h3>
+    <div class="matrix">
+      <div class="row"><p class="m-name">Bind / stun applied to you</p><p class="m-counter">Freedom on cast &mdash; melee has no innate cleanse</p></div>
+      <div class="row"><p class="m-name">Incoming burst / special</p><p class="m-counter">Barricade or Reflect pre-emptively, Anticipation on a flagged single special</p></div>
+      <div class="row"><p class="m-name">Sustained melee pressure back</p><p class="m-counter">Provoke to force aggro predictably, Berserk only when healing is banked to cover the extra damage taken</p></div>
+      <div class="row"><p class="m-name">Multi-target pull</p><p class="m-counter">Cleave/Quake outrank Fury and Assault until the pack thins</p></div>
+    </div>
+
+    <h3 class="block-title">Gear &amp; Relic Tuning</h3>
+    <div class="gear-grid">
+      <div class="g"><p class="label">Aura</p><p class="value">Berserker for sustained melee output, Reflexes if survivability is tight</p></div>
+      <div class="g"><p class="label">Pocket</p><p class="value">Melee-scaling familiar or a flat damage pocket slot</p></div>
+      <div class="g"><p class="label">Relics / Perks</p><p class="value">Anything reducing Fury's cooldown or extending Berserk's safe uptime compounds well with this bar</p></div>
+    </div>
+  </section>
+
+  <footer class="doc-footer">
+    Built for general PvM/slayer/bossing use across all four styles.<br>
+    Give me a specific target (boss + mode) and I'll re-order every bar above around its actual mechanics &mdash; phase caps, reflect windows, stun-immunity, the works.
+  </footer>
+
+</div>
