@@ -119,6 +119,23 @@ Manual: Settings → Updates → **Check for updates** any time, then
 triggered on demand. **Open releases page** is always there too, for a
 plain manual download.
 
+### Private repo + auto-update
+
+If the repo is private, the updater's plain GitHub API calls can't see
+it — you'll need a token:
+
+1. On GitHub: Settings → Developer settings → **Personal access tokens**
+   → **Fine-grained tokens** → Generate new token.
+2. Repository access: **only select repositories** → this repo.
+3. Permissions: **Contents: Read-only**. Nothing else.
+4. Copy the generated token.
+5. In this folder, create a file named `.github_token` (no extension)
+   containing just the token, nothing else.
+
+That file is gitignored — it never gets committed, never travels with
+updates. Delete it any time to revoke local access (and revoke the
+token on GitHub too, to actually kill it).
+
 ## Ability icons
 
 Real RS3 ability icons are Jagex's copyrighted game art, so none are

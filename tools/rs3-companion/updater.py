@@ -26,6 +26,10 @@ REPO = "bburge14/RS3Helper"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 VERSION_FILE = os.path.join(APP_DIR, "VERSION")
 APP_ENTRY = os.path.join(APP_DIR, "app.py")
+# Optional, gitignored: a fine-grained PAT scoped read-only to just this
+# repo, needed only if the repo is private. Never committed, never
+# distributed -- see README "Private repo + auto-update" for setup.
+TOKEN_FILE = os.path.join(APP_DIR, ".github_token")
 
 
 def local_version():
@@ -40,17 +44,40 @@ def _versions_match(tag, local):
     return tag.lstrip("v") == local.lstrip("v")
 
 
+def _load_token():
+    try:
+        with open(TOKEN_FILE, "r", encoding="utf-8") as f:
+            tok = f.read().strip()
+            return tok or None
+    except OSError:
+        return None
+
+
+def _auth_headers(accept="application/vnd.github+json"):
+    headers = {"Accept": accept}
+    tok = _load_token()
+    if tok:
+        headers["Authorization"] = f"Bearer {tok}"
+    return headers
+
+
 def get_release_payload():
     """Returns (payload_dict, error_message). error_message is None on
-    success."""
+    success. Uses a local token (see _load_token) if present -- required
+    to see releases at all once the repo is private."""
     url = f"https://api.github.com/repos/{REPO}/releases/latest"
-    req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json"})
+    req = urllib.request.Request(url, headers=_auth_headers())
     try:
         with urllib.request.urlopen(req, timeout=8) as resp:
             return json.load(resp), None
     except urllib.error.HTTPError as e:
         if e.code == 404:
-            return None, "No releases found (or the repo is still private)."
+            if _load_token():
+                return None, "No releases found (or the token can't see this repo)."
+            return None, ("No releases found -- if the repo is private, add a token: "
+                           "see README \"Private repo + auto-update\".")
+        if e.code == 401:
+            return None, "GitHub rejected the token in .github_token (expired/revoked?)."
         return None, f"GitHub returned an error ({e.code})."
     except urllib.error.URLError:
         return None, "Couldn't reach GitHub — check your connection."
@@ -117,24 +144,36 @@ def apply_git_update():
     return True, "Updated. Restart to apply."
 
 
-def _find_zip_asset_url(payload):
+def _find_zip_asset(payload):
+    """Returns (asset_id, browser_download_url) or (None, None)."""
     for asset in payload.get("assets", []):
         name = asset.get("name", "")
         if name.startswith("rs3-companion-") and name.endswith(".zip"):
-            return asset.get("browser_download_url")
-    return None
+            return asset.get("id"), asset.get("browser_download_url")
+    return None, None
 
 
 def apply_zip_update(payload):
     """Downloads the release's rs3-companion zip asset and overwrites
     this app's own files in place (everything under tools/rs3-companion/
     in the archive). Returns (ok, message)."""
-    url = _find_zip_asset_url(payload)
-    if not url:
+    asset_id, browser_url = _find_zip_asset(payload)
+    if not asset_id:
         return False, "This release has no rs3-companion zip asset."
 
+    tok = _load_token()
+    if tok:
+        # Private (or token-gated) repos: the plain browser_download_url
+        # redirects to a signed storage URL that doesn't accept our auth
+        # header, so fetch the binary through the API's asset endpoint
+        # instead, which does.
+        url = f"https://api.github.com/repos/{REPO}/releases/assets/{asset_id}"
+        req = urllib.request.Request(url, headers=_auth_headers("application/octet-stream"))
+    else:
+        req = urllib.request.Request(browser_url)
+
     try:
-        with urllib.request.urlopen(url, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=30) as resp:
             data = resp.read()
     except Exception as e:
         return False, f"Download failed: {e}"
