@@ -42,7 +42,7 @@ STYLES = {
             {"ability": "Bloat", "type": "basic",
              "revopp": "Applies stacking DoT, cheap adrenaline filler",
              "basics": "On bar"},
-            {"ability": "Command Vengeful Ghost", "type": "threshold",
+            {"ability": "Conjure Vengeful Ghost", "type": "threshold",
              "revopp": "Persistent summon DPS, recast on cooldown",
              "basics": "Manual — recast whenever it drops"},
             {"ability": "Split Soul", "type": "threshold",
@@ -51,14 +51,14 @@ STYLES = {
         ],
         "opener": [
             ("Volley of Souls", 0), ("Bloat", 3),
-            ("Command Vengeful Ghost", 3), ("Invoke Death", 6),
+            ("Conjure Vengeful Ghost", 3), ("Invoke Death", 6),
             ("Living Death", 2),
         ],
         "loop": ["Death Skulls", "Bloodsplicer"],
         "loop_interval_ticks": 8,
         "keys_default": {
             "Volley of Souls": "3", "Bloat": "4",
-            "Command Vengeful Ghost": "5", "Invoke Death": "6",
+            "Conjure Vengeful Ghost": "5", "Invoke Death": "6",
             "Living Death": "1", "Death Skulls": "2", "Bloodsplicer": "7",
         },
         "defensive": [
