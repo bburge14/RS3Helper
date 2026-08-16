@@ -15,29 +15,55 @@ Revolution won't make for you.
   whichever window currently has focus.
 
 Autopress is system-wide keystroke injection, not something scoped to
-one game window — whatever has focus receives the key. Edit the `keys`
-map in `rotations.py` to match your actual action-bar bindings before
-trusting it; a stale mapping presses the wrong ability. This is built
-for a self-hosted/private server, not Jagex's live game — on the live
-game, a program that presses ability hotkeys for you is macroing under
-Jagex's rules regardless of who designed the rotation, and risks the
-account being banned. That risk doesn't apply to your own server, but
-it's real if this ever points at a live account.
+one game window — whatever has focus receives the key. Edit `keys.json`
+(see below) to match your actual action-bar bindings before trusting it;
+a stale mapping presses the wrong ability. This is built for a
+self-hosted/private server, not Jagex's live game — on the live game, a
+program that presses ability hotkeys for you is macroing under Jagex's
+rules regardless of who designed the rotation, and risks the account
+being banned. That risk doesn't apply to your own server, but it's real
+if this ever points at a live account.
 
-## Setup
+## Setup (Windows)
+
+From this folder in PowerShell:
+
+```
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+This finds Python, creates an isolated `.venv` here, installs
+`requirements.txt` into it, copies `keys.example.json` to `keys.json`
+(your personal, gitignored bindings), and drops a desktop shortcut that
+launches the overlay silently (no console window).
+
+If Windows blocks the script outright: right-click `install.ps1` →
+Properties → check **Unblock** → OK, then run the command above.
+
+No installer, just want to run it directly:
 
 ```
 pip install -r requirements.txt
 python app.py
 ```
 
-Requires Windows for the `keyboard` global-hotkey library to reliably
-work over another focused window (RS3). It'll run on other platforms for
-testing the UI, but global hotkeys and the beep are Windows-specific.
+If hotkeys (or autopress) don't reach the game while it's focused, run
+as **Administrator** — Windows blocks a low-privilege process from
+hooking/sending keys over an elevated window, and games sometimes
+launch elevated. Right-click the desktop shortcut → Run as
+administrator.
 
-If hotkeys don't fire while RS3 is focused, run your terminal as
-**Administrator** — Windows blocks a low-privilege process from hooking
-keys over an elevated window, and RS3 sometimes launches elevated.
+## Updating
+
+```
+powershell -ExecutionPolicy Bypass -File update.ps1
+```
+
+Pulls the latest commits (fast-forward only — it won't touch or discard
+any local changes you've made) and refreshes dependencies. Your
+`keys.json` is gitignored, so pulling never overwrites your bindings; if
+an update adds abilities your `keys.json` doesn't have yet, the script
+lists them so you can add bindings for the new ones.
 
 ## Using it
 
@@ -60,6 +86,18 @@ keys over an elevated window, and RS3 sometimes launches elevated.
 
 The overlay shows **PROMPT ONLY** or **AUTOPRESS ARMED** at the bottom
 so it's always visible which mode you're in.
+
+## Key bindings (`keys.json`)
+
+`keys.example.json` is the tracked template; `install.ps1` copies it to
+`keys.json` on first run. Edit `keys.json` (not the example) to match
+your real action bar — it's gitignored, so it survives `update.ps1`
+pulling new rotation data. If you're not using the installer, copy it
+yourself:
+
+```
+cp keys.example.json keys.json
+```
 
 ## Tuning the cadence
 

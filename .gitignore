@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# rotation-prompter: local, machine-specific -- not shared via git
+tools/rotation-prompter/.venv/
+tools/rotation-prompter/keys.json
+tools/rotation-prompter/run.ps1

@@ -29,6 +29,8 @@ from hooking/sending keys over an elevated window, and games sometimes
 launch elevated.
 """
 
+import json
+import os
 import sys
 import tkinter as tk
 
@@ -50,6 +52,18 @@ from rotations import STYLES, STYLE_ORDER
 
 TICK_MS = 600  # 1 RS3 game tick
 
+TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
+# Your personal key bindings, kept out of git (see keys.example.json) so
+# `update.ps1` pulling the latest rotations.py never conflicts with them.
+KEYS_CONFIG_PATH = os.path.join(TOOL_DIR, "keys.json")
+
+
+def load_key_overrides():
+    if os.path.exists(KEYS_CONFIG_PATH):
+        with open(KEYS_CONFIG_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
 
 class Prompter:
     def __init__(self, root):
@@ -58,6 +72,7 @@ class Prompter:
         self.running = False
         self.sound_on = True
         self.autopress = False
+        self.key_overrides = load_key_overrides()
         self.tick = 0
         self.step_idx = -1  # -1 = not started
         self.in_loop = False
@@ -177,6 +192,10 @@ class Prompter:
     def _load_style(self):
         key = STYLE_ORDER[self.style_idx]
         self.style = STYLES[key]
+        self.active_keys = {
+            **self.style["keys"],
+            **self.key_overrides.get(key, {}),
+        }
         self.accent.configure(bg=self.style["color"])
         self.style_label.configure(
             text=self.style["label"].upper(), fg=self.style["color"])
@@ -241,7 +260,7 @@ class Prompter:
         if self.sound_on:
             beep()
         if self.autopress:
-            key = self.style["keys"].get(self.current_name)
+            key = self.active_keys.get(self.current_name)
             if key:
                 keyboard.send(key)
 
