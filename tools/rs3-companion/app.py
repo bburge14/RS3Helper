@@ -15,6 +15,8 @@ F12 sound. Everything is also reachable from the Practice tab's buttons.
 """
 
 import sys
+import time
+import tkinter as tk
 import webbrowser
 
 import customtkinter as ctk
@@ -38,6 +40,13 @@ from config import AppConfig
 import updater
 
 TICK_MS = 600  # 1 RS3 game tick
+ANIM_MS = 33   # ticker redraw interval (~30fps), purely cosmetic interpolation
+
+TICKER_WIDTH = 700
+TICKER_HEIGHT = 92
+TICKER_HIT_X = 78
+TICKER_PX_PER_TICK = 42
+TICKER_LOOKAHEAD = 8  # how many upcoming abilities to simulate/draw
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
@@ -82,12 +91,15 @@ class App(ctk.CTk):
         self.current_name = ""
         self.overlay = None
         self.overlay_widgets = {}
+        self._last_cue_tick = -999
+        self._tick_anchor_time = time.monotonic()
 
         self._build_tabs()
         self._bind_hotkeys()
         self._reset_practice()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.after(TICK_MS, self._tick_loop)
+        self.after(ANIM_MS, self._animate_ticker)
         self.after(150, self.deiconify)
 
     # ---------------------------------------------------------------
@@ -279,7 +291,25 @@ class App(ctk.CTk):
         self.p_tick_label = ctk.CTkLabel(
             wrap, text="tick 0", font=ctk.CTkFont(family="Consolas"),
             text_color=MUTED)
-        self.p_tick_label.pack(anchor="w", pady=(10, 20))
+        self.p_tick_label.pack(anchor="w", pady=(10, 10))
+
+        ticker_frame = ctk.CTkFrame(wrap, fg_color=BG, corner_radius=8)
+        ticker_frame.pack(fill="x", pady=(0, 8))
+        self.p_canvas = tk.Canvas(
+            ticker_frame, width=TICKER_WIDTH, height=TICKER_HEIGHT,
+            bg=BG, highlightthickness=0)
+        self.p_canvas.pack(padx=10, pady=10)
+
+        legend = ctk.CTkFrame(wrap, fg_color="transparent")
+        legend.pack(fill="x", pady=(0, 16))
+        for kind, txt in (("ultimate", "Ultimate"), ("threshold", "Threshold")):
+            sw = ctk.CTkFrame(legend, width=10, height=10, fg_color=TAG_COLORS[kind],
+                               corner_radius=2)
+            sw.pack(side="left", padx=(0, 4), pady=2)
+            ctk.CTkLabel(legend, text=txt, text_color=MUTED,
+                         font=ctk.CTkFont(size=11)).pack(side="left", padx=(0, 14))
+        ctk.CTkLabel(legend, text="→ abilities scroll in and flash at the line when due",
+                     text_color=MUTED, font=ctk.CTkFont(size=11)).pack(side="left")
 
         controls = ctk.CTkFrame(wrap, fg_color="transparent")
         controls.pack(fill="x")
@@ -520,6 +550,7 @@ class App(ctk.CTk):
     def _toggle_running(self):
         self.running = not self.running
         self.start_btn.configure(text="Pause (F9)" if self.running else "Start (F9)")
+        self._tick_anchor_time = time.monotonic()
         if self.running and self.step_idx == -1:
             self._reset_practice(keep_running=True)
 
@@ -546,6 +577,8 @@ class App(ctk.CTk):
         self.step_idx = 0
         self.in_loop = False
         self.loop_pos = 0
+        self._last_cue_tick = -999
+        self._tick_anchor_time = time.monotonic()
         if not keep_running:
             self.running = False
             if hasattr(self, "start_btn"):
@@ -555,10 +588,12 @@ class App(ctk.CTk):
         self.p_style_label.configure(text=STYLES[self.style_key]["label"].upper(),
                                       text_color=STYLES[self.style_key]["color"])
         self._render_current(opener[0][0])
+        self._redraw_ticker(float(self.tick))
 
     def _tick_loop(self):
         if self.running:
             self.tick += 1
+            self._tick_anchor_time = time.monotonic()
             self._maybe_advance()
         self.p_tick_label.configure(text=f"tick {self.tick}")
         if self.overlay and self.overlay.winfo_exists():
@@ -616,12 +651,100 @@ class App(ctk.CTk):
         return loop[(self.loop_pos + 1) % len(loop)]
 
     def _cue(self):
+        self._last_cue_tick = self.tick
         if self.sound_on:
             beep()
         if self.autopress:
             key = self.config_store.keys_for(self.style_key).get(self.current_name)
             if key:
                 keyboard.send(key)
+
+    # ---------------------------------------------------------------
+    # Ticker (Guitar Hero-style upcoming-ability lane)
+    # ---------------------------------------------------------------
+
+    def _simulate_upcoming(self, count):
+        """Pure lookahead: replays the same branching _maybe_advance uses,
+        without touching real state, to get (name, type, due_tick) for the
+        next `count` cues after the one currently displayed."""
+        style = STYLES[self.style_key]
+        opener, loop, interval = style["opener"], style["loop"], style["loop_interval_ticks"]
+        type_of = {e["ability"]: e["type"] for e in style["bar"]}
+
+        step_idx, in_loop, loop_pos = self.step_idx, self.in_loop, self.loop_pos
+        due = self.next_due_tick
+        out = []
+        for _ in range(count):
+            if not in_loop:
+                nxt = step_idx + 1
+                if nxt >= len(opener):
+                    in_loop = True
+                    loop_pos = 0
+                    name = loop[0]
+                    out.append((name, type_of.get(name, "threshold"), due))
+                    due += interval
+                    continue
+                name, _ = opener[nxt]
+                out.append((name, type_of.get(name, "threshold"), due))
+                if nxt + 1 < len(opener):
+                    due += opener[nxt + 1][1]
+                else:
+                    due += interval
+                step_idx = nxt
+            else:
+                loop_pos = (loop_pos + 1) % len(loop)
+                name = loop[loop_pos]
+                out.append((name, type_of.get(name, "threshold"), due))
+                due += interval
+        return out
+
+    def _animate_ticker(self):
+        elapsed = time.monotonic() - self._tick_anchor_time
+        frac = min(1.0, elapsed / (TICK_MS / 1000)) if self.running else 0.0
+        self._redraw_ticker(self.tick + frac)
+        self.after(ANIM_MS, self._animate_ticker)
+
+    def _redraw_ticker(self, effective_tick):
+        c = self.p_canvas
+        c.delete("all")
+        accent = STYLES[self.style_key]["color"]
+
+        # hit line
+        c.create_line(TICKER_HIT_X, 6, TICKER_HIT_X, TICKER_HEIGHT - 6,
+                       fill=accent, width=2)
+
+        # current ability flashes at the hit line for a couple ticks after cue
+        since_cue = self.tick - self._last_cue_tick
+        if since_cue <= 1:
+            style = STYLES[self.style_key]
+            type_of = {e["ability"]: e["type"] for e in style["bar"]}
+            kind = type_of.get(self.current_name, "threshold")
+            flash = TAG_COLORS[kind]
+            pulse = since_cue == 0
+            c.create_oval(TICKER_HIT_X - 22, TICKER_HEIGHT / 2 - 22,
+                          TICKER_HIT_X + 22, TICKER_HEIGHT / 2 + 22,
+                          outline=flash, width=3)
+            c.create_text(TICKER_HIT_X, TICKER_HEIGHT - 12,
+                          text=self.current_name, fill=TEXT if pulse else MUTED,
+                          font=("Segoe UI", 9, "bold"))
+
+        if not self.running:
+            c.create_text(TICKER_WIDTH / 2, 12, text="Press Start to begin the tick metronome",
+                          fill=MUTED, font=("Segoe UI", 10))
+
+        for name, kind, due in self._simulate_upcoming(TICKER_LOOKAHEAD):
+            x = TICKER_HIT_X + (due - effective_tick) * TICKER_PX_PER_TICK
+            if x - 55 > TICKER_WIDTH:
+                break
+            if x < TICKER_HIT_X - 30:
+                continue
+            color = TAG_COLORS[kind]
+            w = 100
+            c.create_rectangle(x - w / 2, TICKER_HEIGHT / 2 - 16,
+                               x + w / 2, TICKER_HEIGHT / 2 + 16,
+                               outline=color, width=2, fill=BG)
+            c.create_text(x, TICKER_HEIGHT / 2, text=name, fill=TEXT,
+                          font=("Segoe UI", 9, "bold"), width=w - 10)
 
     # ---------------------------------------------------------------
 

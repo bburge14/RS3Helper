@@ -53,7 +53,10 @@ selected, the style's defensive/utility matrix, and gear/relic tuning.
 
 **Practice** — the tick metronome. Press Start the instant your first
 hit lands (that's tick 0), and it cues the manual threshold/ultimate
-sequence from there. Two modes:
+sequence from there. A Guitar Hero-style lane shows upcoming abilities
+scrolling in from the right toward a hit-line, flashing when each one's
+due — so you can see the actual timing, not just read a label change.
+Two modes, both drive the same lane:
 - **Prompt mode** (default): shows/beeps the next ability. Sends
   nothing anywhere.
 - **Autopress** (F8 or the switch, off by default): also sends the
