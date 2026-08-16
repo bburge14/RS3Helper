@@ -90,12 +90,24 @@ click than remember function keys.
 
 ## Updating
 
-Settings tab → Updates → **Check for updates**. If this is a git
-checkout and an update's available, **Update now** does a
-fast-forward-only `git pull` (never touches local changes — it'll tell
-you to commit/stash first if you have any). If you installed from a
-downloaded zip instead of `git clone`, it opens the release page for a
-manual re-download.
+Automatic: a few seconds after launch, the app checks the latest GitHub
+release in the background and, if it's newer, applies it right then —
+a `git pull` if you cloned the repo, or a download-and-overwrite of its
+own files if you installed from a zip. Either way it only touches files
+on disk; the running app keeps executing what it already loaded, so a
+green banner appears at the top — **"Update vX ready — restart to
+apply"** — with a **Restart now** button that saves your config, closes,
+and relaunches. Dismissing the banner doesn't undo the update; it's
+already on disk and takes effect whenever you next restart normally.
+
+If your repo checkout has local changes, the automatic git-pull path
+skips itself rather than risk them — use Settings → Updates → **Check
+for updates** to see why, and resolve them before it'll proceed.
+
+Manual: Settings tab → Updates → **Check for updates** any time, then
+**Update now**. Same underlying logic as the automatic check, just
+triggered on demand. **Open releases page** is always there too, for a
+plain manual download.
 
 ## Data & accuracy
 

@@ -15,6 +15,7 @@ F12 sound. Everything is also reachable from the Practice tab's buttons.
 """
 
 import sys
+import threading
 import time
 import tkinter as tk
 import webbrowser
@@ -93,7 +94,9 @@ class App(ctk.CTk):
         self.overlay_widgets = {}
         self._last_cue_tick = -999
         self._tick_anchor_time = time.monotonic()
+        self._pending_payload = None
 
+        self._build_update_banner()
         self._build_tabs()
         self._bind_hotkeys()
         self._reset_practice()
@@ -101,10 +104,27 @@ class App(ctk.CTk):
         self.after(TICK_MS, self._tick_loop)
         self.after(ANIM_MS, self._animate_ticker)
         self.after(150, self.deiconify)
+        self.after(3000, self._start_auto_update_check)
 
     # ---------------------------------------------------------------
     # Layout
     # ---------------------------------------------------------------
+
+    def _build_update_banner(self):
+        # Created up front but not packed -- stays invisible until an
+        # update is actually ready, then _show_update_banner() packs it.
+        self.update_banner = ctk.CTkFrame(self, fg_color="#1f3d2e", corner_radius=0)
+        self.update_banner_label = ctk.CTkLabel(
+            self.update_banner, text="", text_color="#bff2d6",
+            font=ctk.CTkFont(size=12, weight="bold"))
+        self.update_banner_label.pack(side="left", padx=14, pady=8)
+        ctk.CTkButton(self.update_banner, text="Restart now", width=110, height=26,
+                      fg_color="#2f7d55", hover_color="#256844",
+                      command=self._restart_now).pack(side="right", padx=(6, 14), pady=7)
+        ctk.CTkButton(self.update_banner, text="Dismiss", width=80, height=26,
+                      fg_color="transparent", hover_color="#245038", text_color="#bff2d6",
+                      command=self.update_banner.pack_forget).pack(
+            side="right", padx=6, pady=7)
 
     def _build_tabs(self):
         self.tabs = ctk.CTkTabview(self, fg_color=SURFACE)
@@ -116,6 +136,42 @@ class App(ctk.CTk):
         self._build_bar_builder(self.tabs.tab("Bar Builder"))
         self._build_practice(self.tabs.tab("Practice"))
         self._build_settings(self.tabs.tab("Settings"))
+
+    def _show_update_banner(self, tag):
+        self.update_banner_label.configure(
+            text=f"Update {tag} downloaded — restart to apply")
+        self.update_banner.pack(fill="x", side="top", before=self.tabs)
+        if hasattr(self, "version_label"):
+            self.version_label.configure(
+                text=f"Installed version: {updater.local_version()} "
+                     f"(update downloaded, restart to apply)")
+        if hasattr(self, "update_now_btn"):
+            self.update_now_btn.configure(state="disabled")
+
+    def _restart_now(self):
+        self.config_store.save()
+        try:
+            keyboard.unhook_all_hotkeys()
+        except Exception:
+            pass
+        updater.relaunch_and_exit()
+
+    # ---------------------------------------------------------------
+    # Update checking
+    # ---------------------------------------------------------------
+
+    def _start_auto_update_check(self):
+        threading.Thread(target=self._auto_update_worker, daemon=True).start()
+
+    def _auto_update_worker(self):
+        # Runs off the main thread -- network I/O and file writes only;
+        # any GUI touch is marshaled back via self.after(0, ...).
+        status, tag, _msg = updater.auto_update()
+        if status == "updated":
+            self.after(0, lambda: self._show_update_banner(tag))
+        # up_to_date / failed / error: stay quiet in the background. The
+        # Settings tab's manual "Check for updates" surfaces those on
+        # request instead of nagging on every launch.
 
     # ---------- Bar Builder tab ----------
 
@@ -448,6 +504,11 @@ class App(ctk.CTk):
         self.version_label = ctk.CTkLabel(
             scroll, text=f"Installed version: {updater.local_version()}", text_color=TEXT)
         self.version_label.pack(anchor="w")
+        ctk.CTkLabel(scroll, text="Checks automatically a few seconds after launch and "
+                                   "applies updates in the background — a banner appears "
+                                   "up top when one's ready, restart to pick it up.",
+                     text_color=MUTED, wraplength=700, justify="left",
+                     font=ctk.CTkFont(size=11)).pack(anchor="w", pady=(2, 0))
         self.update_status = ctk.CTkLabel(scroll, text="", text_color=MUTED,
                                            wraplength=700, justify="left")
         self.update_status.pack(anchor="w", pady=(4, 8))
@@ -459,8 +520,10 @@ class App(ctk.CTk):
         self.update_now_btn = ctk.CTkButton(
             upd_buttons, text="Update now", state="disabled",
             command=self._apply_update)
-        self.update_now_btn.pack(side="left")
-        self._pending_release_url = None
+        self.update_now_btn.pack(side="left", padx=(0, 8))
+        ctk.CTkButton(upd_buttons, text="Open releases page", fg_color="#443f56",
+                      command=lambda: webbrowser.open(
+                          f"https://github.com/{updater.REPO}/releases")).pack(side="left")
 
     def _render_keybind_editor(self, style_label):
         style_key = next(k for k in STYLE_ORDER if STYLES[k]["label"] == style_label)
@@ -494,34 +557,36 @@ class App(ctk.CTk):
     def _check_updates(self):
         self.update_status.configure(text="Checking...")
         self.update()  # flush UI before the (blocking) network call
-        tag, url, notes = updater.latest_release()
+        payload, err = updater.get_release_payload()
         local = updater.local_version()
-        if tag is None:
-            self.update_status.configure(text=notes)
+        if payload is None:
+            self.update_status.configure(text=err)
             self.update_now_btn.configure(state="disabled")
-            self._pending_release_url = None
+            self._pending_payload = None
             return
+        tag = payload["tag_name"]
         if tag.lstrip("v") == local.lstrip("v"):
             self.update_status.configure(text=f"Already up to date ({local}).")
             self.update_now_btn.configure(state="disabled")
-            self._pending_release_url = None
+            self._pending_payload = None
         else:
+            notes = payload.get("body", "")
             self.update_status.configure(
                 text=f"Update available: {local} → {tag}\n{notes[:300]}")
-            self._pending_release_url = url
-            if updater.is_git_checkout():
-                self.update_now_btn.configure(state="normal", text="Update now (git pull)")
-            else:
-                self.update_now_btn.configure(state="normal", text="Open release page")
+            self._pending_payload = payload
+            self.update_now_btn.configure(state="normal", text="Update now")
 
     def _apply_update(self):
         if updater.is_git_checkout():
             ok, msg = updater.apply_git_update()
-            self.update_status.configure(text=msg)
-            if ok:
-                self.update_now_btn.configure(state="disabled")
-        elif self._pending_release_url:
-            webbrowser.open(self._pending_release_url)
+        elif self._pending_payload:
+            ok, msg = updater.apply_zip_update(self._pending_payload)
+        else:
+            return
+        self.update_status.configure(text=msg)
+        if ok:
+            tag = self._pending_payload["tag_name"] if self._pending_payload else updater.local_version()
+            self._show_update_banner(tag)
 
     # ---------------------------------------------------------------
     # Global hotkeys
